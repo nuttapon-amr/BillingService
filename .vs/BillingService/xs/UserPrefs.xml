@@ -1,0 +1,32 @@
+﻿<Properties StartupConfiguration="{2F35A198-3842-4320-9757-20D2D456F829}|http">
+  <MultiItemStartupConfigurations />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/Users/nuttapon/GitHub/BillingService/BillingService_API/Controllers/DocumentsController.cs" relfile="BillingService_API/Controllers/DocumentsController.cs" line="107" column="1" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.ItemProperties.BillingService__API PreferredExecutionTarget="/Applications/Brave Browser.app" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="BillingService_API/appsettings.json">
+    <Files>
+      <File FileName="BillingService_API/Controllers/DocumentsController.cs" Line="95" Column="10" />
+      <File FileName="BillingService_API/Program.cs" Line="42" Column="42" />
+      <File FileName="BillingService_API/Controllers/HeartbeatController.cs" Line="6" Column="22" />
+      <File FileName="BillingService_API/BillingService_API.http" Line="1" Column="1" />
+      <File FileName="BillingService_API/appsettings.json" Line="1" Column="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="BillingService" expanded="True">
+            <Node name="BillingService_API">
+              <Node name="Controllers" expanded="True" />
+              <Node name="appsettings.json" selected="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+</Properties>

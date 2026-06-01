@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\DataAccess.csproj", "{8763F7E9-AB01-485C-8FC6-53B13EE5878A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BillingService_API", "BillingService_API\BillingService_API.csproj", "{2F35A198-3842-4320-9757-20D2D456F829}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8763F7E9-AB01-485C-8FC6-53B13EE5878A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8763F7E9-AB01-485C-8FC6-53B13EE5878A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8763F7E9-AB01-485C-8FC6-53B13EE5878A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8763F7E9-AB01-485C-8FC6-53B13EE5878A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F35A198-3842-4320-9757-20D2D456F829}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F35A198-3842-4320-9757-20D2D456F829}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F35A198-3842-4320-9757-20D2D456F829}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F35A198-3842-4320-9757-20D2D456F829}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

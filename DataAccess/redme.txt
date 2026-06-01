@@ -1,0 +1,1 @@
+﻿dotnet ef dbcontext scaffold "Server=localhost;port=3306;User=root;Password=1234;Database=BillingService;" Pomelo.EntityFrameworkCore.MySql -o Models/BillingService -f
