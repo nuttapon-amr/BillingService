@@ -8,6 +8,12 @@ namespace BillingService_API.Services;
 
 public class CustomerService : ICustomerService
 {
+    private static readonly HashSet<string> AllowedCustomerTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "INDIVIDUAL",
+        "CORPORATE"
+    };
+
     private readonly BillingServiceContext _context;
 
     public CustomerService(BillingServiceContext context)
@@ -31,35 +37,46 @@ public class CustomerService : ICustomerService
 
     public async Task<CustomerResponse> CreateCustomerAsync(CreateCustomerRequest request, CancellationToken cancellationToken = default)
     {
-        ValidateRequest(request.CustomerId, request.CustomerName);
+        ValidateCreateRequest(request);
 
-        var duplicated = await _context.Customers
-            .AsNoTracking()
-            .AnyAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
-
-        if (duplicated)
-        {
-            throw new ConflictException("CustomerId already exists.");
-        }
+        var existingCustomer = await _context.Customers
+            .SingleOrDefaultAsync(c => c.CustomerId == request.CustomerId, cancellationToken);
 
         var now = DateTime.UtcNow;
-        var entity = new Customer
-        {
-            CustomerId = request.CustomerId,
-            CustomerName = request.CustomerName.Trim(),
-            TaxId = NormalizeNullable(request.TaxId),
-            BranchNo = NormalizeNullable(request.BranchNo),
-            Address = NormalizeNullable(request.Address),
-            Email = NormalizeNullable(request.Email),
-            Phone = NormalizeNullable(request.Phone),
-            IsDeleted = false,
-            DeletedAt = null,
-            DeletedBy = null,
-            CreatedAt = now,
-            UpdatedAt = now
-        };
+        Customer entity;
 
-        _context.Customers.Add(entity);
+        if (existingCustomer is null)
+        {
+            entity = new Customer
+            {
+                CustomerId = request.CustomerId,
+                CreatedAt = now
+            };
+            _context.Customers.Add(entity);
+        }
+        else
+        {
+            if (!existingCustomer.IsDeleted)
+            {
+                throw new ConflictException("CustomerId already exists.");
+            }
+
+            entity = existingCustomer;
+        }
+
+        entity.CustomerName = request.CustomerName.Trim();
+        entity.CustomerType = NormalizeCustomerType(request.CustomerType);
+        entity.TaxId = NormalizeNullable(request.TaxId);
+        entity.BranchNo = NormalizeNullable(request.BranchNo);
+        entity.Address = NormalizeNullable(request.Address);
+        entity.PostalCode = NormalizeNullable(request.PostalCode);
+        entity.Email = NormalizeNullable(request.Email);
+        entity.Phone = NormalizeNullable(request.Phone);
+        entity.IsDeleted = false;
+        entity.DeletedAt = null;
+        entity.DeletedBy = null;
+        entity.UpdatedAt = now;
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return Map(entity);
@@ -67,7 +84,7 @@ public class CustomerService : ICustomerService
 
     public async Task<CustomerResponse> UpdateCustomerAsync(Guid customerId, UpdateCustomerRequest request, CancellationToken cancellationToken = default)
     {
-        ValidateRequest(customerId, request.CustomerName);
+        ValidateUpdateRequest(customerId, request);
 
         var entity = await _context.Customers
             .SingleOrDefaultAsync(c => c.CustomerId == customerId && !c.IsDeleted, cancellationToken);
@@ -78,9 +95,11 @@ public class CustomerService : ICustomerService
         }
 
         entity.CustomerName = request.CustomerName.Trim();
+        entity.CustomerType = NormalizeCustomerType(request.CustomerType);
         entity.TaxId = NormalizeNullable(request.TaxId);
         entity.BranchNo = NormalizeNullable(request.BranchNo);
         entity.Address = NormalizeNullable(request.Address);
+        entity.PostalCode = NormalizeNullable(request.PostalCode);
         entity.Email = NormalizeNullable(request.Email);
         entity.Phone = NormalizeNullable(request.Phone);
         entity.UpdatedAt = DateTime.UtcNow;
@@ -117,16 +136,41 @@ public class CustomerService : ICustomerService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private static void ValidateRequest(Guid customerId, string? customerName)
+    private static void ValidateCreateRequest(CreateCustomerRequest request)
+    {
+        if (request.CustomerId == Guid.Empty)
+        {
+            throw new ValidationException("CustomerId is required.");
+        }
+
+        ValidateRequestCore(request.CustomerName, request.CustomerType);
+    }
+
+    private static void ValidateUpdateRequest(Guid customerId, UpdateCustomerRequest request)
     {
         if (customerId == Guid.Empty)
         {
             throw new ValidationException("CustomerId is required.");
         }
 
+        ValidateRequestCore(request.CustomerName, request.CustomerType);
+    }
+
+    private static void ValidateRequestCore(string? customerName, string? customerType)
+    {
         if (string.IsNullOrWhiteSpace(customerName))
         {
             throw new ValidationException("CustomerName is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(customerType))
+        {
+            throw new ValidationException("CustomerType is required.");
+        }
+
+        if (!AllowedCustomerTypes.Contains(customerType.Trim()))
+        {
+            throw new ValidationException("CustomerType must be either INDIVIDUAL or CORPORATE.");
         }
     }
 
@@ -140,15 +184,19 @@ public class CustomerService : ICustomerService
         return value.Trim();
     }
 
+    private static string NormalizeCustomerType(string value) => value.Trim().ToUpperInvariant();
+
     private static CustomerResponse Map(Customer entity)
     {
         return new CustomerResponse
         {
             CustomerId = entity.CustomerId,
             CustomerName = entity.CustomerName,
+            CustomerType = entity.CustomerType,
             TaxId = entity.TaxId,
             BranchNo = entity.BranchNo,
             Address = entity.Address,
+            PostalCode = entity.PostalCode,
             Email = entity.Email,
             Phone = entity.Phone,
             CreatedAt = entity.CreatedAt,

@@ -10,9 +10,11 @@ public class DocumentResponse
     public string? CompanyBranchNoSnapshot { get; set; }
     public string? CompanyAddressSnapshot { get; set; }
     public string? CustomerNameSnapshot { get; set; }
+    public string? CustomerTypeSnapshot { get; set; }
     public string? CustomerTaxIdSnapshot { get; set; }
     public string? CustomerBranchNoSnapshot { get; set; }
     public string? CustomerAddressSnapshot { get; set; }
+    public string? CustomerPostalCodeSnapshot { get; set; }
     public string SourceType { get; set; } = string.Empty;
     public Guid SourceId { get; set; }
     public string? SourceNo { get; set; }

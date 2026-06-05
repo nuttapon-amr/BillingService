@@ -19,6 +19,11 @@ public partial class Customer
     public string CustomerName { get; set; } = null!;
 
     /// <summary>
+    /// ประเภทลูกค้า: INDIVIDUAL หรือ CORPORATE
+    /// </summary>
+    public string CustomerType { get; set; } = null!;
+
+    /// <summary>
     /// เลขประจำตัวผู้เสียภาษีของลูกค้า
     /// </summary>
     public string? TaxId { get; set; }
@@ -32,6 +37,11 @@ public partial class Customer
     /// ที่อยู่ลูกค้า
     /// </summary>
     public string? Address { get; set; }
+
+    /// <summary>
+    /// รหัสไปรษณีย์
+    /// </summary>
+    public string? PostalCode { get; set; }
 
     /// <summary>
     /// อีเมลลูกค้า

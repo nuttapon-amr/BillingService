@@ -593,18 +593,22 @@ public class DocumentService : IDocumentService
         if (customer is not null)
         {
             document.CustomerNameSnapshot = customer.CustomerName;
+            document.CustomerTypeSnapshot = customer.CustomerType;
             document.CustomerTaxIdSnapshot = customer.TaxId;
             document.CustomerBranchNoSnapshot = customer.BranchNo;
             document.CustomerAddressSnapshot = customer.Address;
+            document.CustomerPostalCodeSnapshot = customer.PostalCode;
         }
     }
 
     private static void CopyReceiverSnapshotFromReceipt(Document target, Document source)
     {
         target.CustomerNameSnapshot = source.CustomerNameSnapshot;
+        target.CustomerTypeSnapshot = source.CustomerTypeSnapshot;
         target.CustomerTaxIdSnapshot = source.CustomerTaxIdSnapshot;
         target.CustomerBranchNoSnapshot = source.CustomerBranchNoSnapshot;
         target.CustomerAddressSnapshot = source.CustomerAddressSnapshot;
+        target.CustomerPostalCodeSnapshot = source.CustomerPostalCodeSnapshot;
     }
 
     private static DocumentAuditLog CreateAuditLog(Guid documentId, string action, object? oldValue, object? newValue, string? createdBy = null)
@@ -633,9 +637,11 @@ public class DocumentService : IDocumentService
             CompanyBranchNoSnapshot = document.CompanyBranchNoSnapshot,
             CompanyAddressSnapshot = document.CompanyAddressSnapshot,
             CustomerNameSnapshot = document.CustomerNameSnapshot,
+            CustomerTypeSnapshot = document.CustomerTypeSnapshot,
             CustomerTaxIdSnapshot = document.CustomerTaxIdSnapshot,
             CustomerBranchNoSnapshot = document.CustomerBranchNoSnapshot,
             CustomerAddressSnapshot = document.CustomerAddressSnapshot,
+            CustomerPostalCodeSnapshot = document.CustomerPostalCodeSnapshot,
             SourceType = document.SourceType,
             SourceId = document.SourceId,
             SourceNo = document.SourceNo,

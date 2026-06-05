@@ -56,6 +56,10 @@ public class CustomersController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch (ConflictException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPut("{customerId:guid}")]

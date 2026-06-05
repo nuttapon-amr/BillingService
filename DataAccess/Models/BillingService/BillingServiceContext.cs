@@ -37,7 +37,7 @@ public partial class BillingServiceContext : DbContext
     public virtual DbSet<DocumentTemplate> DocumentTemplates { get; set; }
 
     public virtual DbSet<DocumentType> DocumentTypes { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -109,6 +109,10 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.CustomerName)
                 .HasMaxLength(255)
                 .HasComment("ชื่อลูกค้า");
+            entity.Property(e => e.CustomerType)
+                .HasMaxLength(20)
+                .HasDefaultValueSql("'INDIVIDUAL'")
+                .HasComment("ประเภทลูกค้า: INDIVIDUAL หรือ CORPORATE");
             entity.Property(e => e.DeletedAt)
                 .HasComment("เวลาโดนลบ")
                 .HasColumnType("datetime");
@@ -120,6 +124,9 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.Phone)
                 .HasMaxLength(50)
                 .HasComment("เบอร์โทรลูกค้า");
+            entity.Property(e => e.PostalCode)
+                .HasMaxLength(10)
+                .HasComment("รหัสไปรษณีย์");
             entity.Property(e => e.TaxId)
                 .HasMaxLength(20)
                 .HasComment("เลขประจำตัวผู้เสียภาษีของลูกค้า");
@@ -186,9 +193,15 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.CustomerNameSnapshot)
                 .HasMaxLength(255)
                 .HasComment("ชื่อลูกค้า ณ วันที่ออกเอกสาร");
+            entity.Property(e => e.CustomerPostalCodeSnapshot)
+                .HasMaxLength(10)
+                .HasComment("รหัสไปรษณีย์ ณ วันที่ออกเอกสาร");
             entity.Property(e => e.CustomerTaxIdSnapshot)
                 .HasMaxLength(20)
                 .HasComment("เลขผู้เสียภาษี ณ วันที่ออกเอกสาร");
+            entity.Property(e => e.CustomerTypeSnapshot)
+                .HasMaxLength(20)
+                .HasComment("ประเภทผู้เสียภาษี ณ วันที่ออกเอกสาร (INDIVIDUAL/CORPORATE)");
             entity.Property(e => e.DocumentNo)
                 .HasMaxLength(50)
                 .HasComment("เลขที่เอกสาร เช่น AMR-RC-202605-000001");

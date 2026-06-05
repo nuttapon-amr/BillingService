@@ -49,6 +49,11 @@ public partial class Document
     public string? CustomerNameSnapshot { get; set; }
 
     /// <summary>
+    /// ประเภทผู้เสียภาษี ณ วันที่ออกเอกสาร (INDIVIDUAL/CORPORATE)
+    /// </summary>
+    public string? CustomerTypeSnapshot { get; set; }
+
+    /// <summary>
     /// เลขผู้เสียภาษี ณ วันที่ออกเอกสาร
     /// </summary>
     public string? CustomerTaxIdSnapshot { get; set; }
@@ -62,6 +67,11 @@ public partial class Document
     /// ที่อยู่ ณ วันที่ออกเอกสาร
     /// </summary>
     public string? CustomerAddressSnapshot { get; set; }
+
+    /// <summary>
+    /// รหัสไปรษณีย์ ณ วันที่ออกเอกสาร
+    /// </summary>
+    public string? CustomerPostalCodeSnapshot { get; set; }
 
     /// <summary>
     /// ประเภทข้อมูลต้นทาง เช่น ChargingTransaction, Subscription
