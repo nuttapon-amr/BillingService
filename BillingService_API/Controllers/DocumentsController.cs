@@ -18,12 +18,12 @@ public class DocumentsController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet("receipts/{receiptId:guid}")]
-    public async Task<IActionResult> GetReceiptDetail(Guid receiptId, CancellationToken cancellationToken)
+    [HttpGet("receipts/{documentId:guid}")]
+    public async Task<IActionResult> GetReceiptDetail(Guid documentId, CancellationToken cancellationToken)
     {
         try
         {
-            var response = await _documentService.GetReceiptDetailAsync(receiptId, cancellationToken);
+            var response = await _documentService.GetReceiptDetailAsync(documentId, cancellationToken);
             if (response is null)
             {
                 return NotFound();
@@ -64,12 +64,12 @@ public class DocumentsController : ControllerBase
         }
     }
 
-    [HttpGet("receipts/{receiptId:guid}/pdf")]
-    public async Task<IActionResult> GetReceiptPdf(Guid receiptId, CancellationToken cancellationToken)
+    [HttpGet("receipts/{documentId:guid}/pdf")]
+    public async Task<IActionResult> GetReceiptPdf(Guid documentId, CancellationToken cancellationToken)
     {
         try
         {
-            var response = await _documentService.GetReceiptPdfContentAsync(receiptId, cancellationToken);
+            var response = await _documentService.GetReceiptPdfContentAsync(documentId, cancellationToken);
             return File(response.Content, "application/pdf", response.FileName);
         }
         catch (ValidationException ex)
@@ -82,12 +82,12 @@ public class DocumentsController : ControllerBase
         }
     }
 
-    [HttpGet("tax-invoices/{taxInvoiceId:guid}/pdf")]
-    public async Task<IActionResult> GetTaxInvoicePdf(Guid taxInvoiceId, CancellationToken cancellationToken)
+    [HttpGet("tax-invoices/{documentId:guid}/pdf")]
+    public async Task<IActionResult> GetTaxInvoicePdf(Guid documentId, CancellationToken cancellationToken)
     {
         try
         {
-            var response = await _documentService.GetTaxInvoicePdfContentAsync(taxInvoiceId, cancellationToken);
+            var response = await _documentService.GetTaxInvoicePdfContentAsync(documentId, cancellationToken);
             return File(response.Content, "application/pdf", response.FileName);
         }
         catch (ValidationException ex)
@@ -99,9 +99,9 @@ public class DocumentsController : ControllerBase
             return NotFound(ex.Message);
         }
     }
-
-    [HttpPost("{receiptId:guid}/tax-invoice")]
-    public async Task<IActionResult> CreateTaxInvoice(Guid receiptId, [FromBody] CreateTaxInvoiceRequest request, CancellationToken cancellationToken)
+    
+    [HttpPost("{documentId:guid}/tax-invoice")]
+    public async Task<IActionResult> CreateTaxInvoice(Guid documentId, [FromBody] CreateTaxInvoiceRequest request, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
         {
@@ -110,7 +110,7 @@ public class DocumentsController : ControllerBase
 
         try
         {
-            var response = await _documentService.CreateTaxInvoiceFromReceiptAsync(receiptId, request, cancellationToken);
+            var response = await _documentService.CreateTaxInvoiceFromReceiptAsync(documentId, request, cancellationToken);
             return Ok(response);
         }
         catch (ValidationException ex)
@@ -151,26 +151,6 @@ public class DocumentsController : ControllerBase
         catch (ConflictException ex)
         {
             return Conflict(ex.Message);
-        }
-    }
-
-    [HttpGet("{documentId:guid}")]
-    public async Task<IActionResult> GetDocumentDetail(Guid documentId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var response = await _documentService.GetDocumentDetailAsync(documentId, cancellationToken);
-            if (response is null)
-            {
-                return NotFound();
-            }
-
-            return Ok(response);
-        }
-        catch (ValidationException ex)
-        {
-            _logger.LogWarning(ex, "Invalid request for GetDocumentDetail");
-            return BadRequest(ex.Message);
         }
     }
 }

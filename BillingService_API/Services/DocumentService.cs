@@ -16,6 +16,7 @@ public class DocumentService : IDocumentService
     private const string CancelledStatus = "Cancelled";
     private const string ReceiptDocumentType = "RC";
     private const string TaxInvoiceDocumentType = "TI";
+    private const string CreditNoteDocumentType = "CN";
 
     private readonly BillingServiceContext _context;
     private readonly IDocumentNumberService _documentNumberService;
@@ -110,29 +111,34 @@ public class DocumentService : IDocumentService
         return MapDocument(document);
     }
 
-    public async Task<DocumentResponse?> GetReceiptDetailAsync(Guid receiptId, CancellationToken cancellationToken = default)
+    public async Task<DocumentResponse?> GetReceiptDetailAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
-        if (receiptId == Guid.Empty)
+        if (documentId == Guid.Empty)
         {
-            throw new ValidationException("ReceiptId is required.");
+            throw new ValidationException("documentId is required.");
         }
 
         var receipt = await _context.Documents
             .AsNoTracking()
             .Include(d => d.DocumentItems)
-            .SingleOrDefaultAsync(d => d.DocumentId == receiptId && d.DocumentType == ReceiptDocumentType, cancellationToken);
+            .SingleOrDefaultAsync(d => d.DocumentId == documentId && d.DocumentType == ReceiptDocumentType, cancellationToken);
 
         return receipt is null ? null : MapDocument(receipt);
     }
 
-    public async Task<(byte[] Content, string FileName)> GetReceiptPdfContentAsync(Guid receiptId, CancellationToken cancellationToken = default)
+    public async Task<(byte[] Content, string FileName)> GetReceiptPdfContentAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
-        return await GetDocumentPdfContentByTypeAsync(receiptId, ReceiptDocumentType, "ReceiptId", cancellationToken);
+        return await GetDocumentPdfContentByTypeAsync(documentId, ReceiptDocumentType, "DocumentId", cancellationToken);
     }
 
-    public async Task<(byte[] Content, string FileName)> GetTaxInvoicePdfContentAsync(Guid taxInvoiceId, CancellationToken cancellationToken = default)
+    public async Task<(byte[] Content, string FileName)> GetTaxInvoicePdfContentAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
-        return await GetDocumentPdfContentByTypeAsync(taxInvoiceId, TaxInvoiceDocumentType, "TaxInvoiceId", cancellationToken);
+        return await GetDocumentPdfContentByTypeAsync(documentId, TaxInvoiceDocumentType, "DocumentId", cancellationToken);
+    }
+
+    public async Task<(byte[] Content, string FileName)> GetDocumentPdfContentAsync(Guid documentId, CancellationToken cancellationToken = default)
+    {
+        return await GetDocumentPdfContentByIdAsync(documentId, "DocumentId", cancellationToken);
     }
 
     private async Task<DocumentFile> CreateAutoDocumentPdfFileAsync(
@@ -162,6 +168,47 @@ public class DocumentService : IDocumentService
             GeneratedAt = DateTime.UtcNow,
             IsActive = true
         };
+    }
+
+    private async Task<(byte[] Content, string FileName)> GetDocumentPdfContentByIdAsync(
+        Guid documentId,
+        string idName,
+        CancellationToken cancellationToken)
+    {
+        if (documentId == Guid.Empty)
+        {
+            throw new ValidationException($"{idName} is required.");
+        }
+
+        var documentExists = await _context.Documents
+            .AsNoTracking()
+            .AnyAsync(d => d.DocumentId == documentId, cancellationToken);
+
+        if (!documentExists)
+        {
+            throw new NotFoundException("Document not found.");
+        }
+
+        var file = await _context.DocumentFiles
+            .AsNoTracking()
+            .Where(f => f.DocumentId == documentId && f.FileType == "PDF")
+            .OrderByDescending(f => f.IsActive == true)
+            .ThenByDescending(f => f.GeneratedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (file is null)
+        {
+            throw new NotFoundException("PDF file not found.");
+        }
+
+        var filePath = Path.Combine(ResolveReceiptPdfDirectory(), file.FileName);
+        if (!System.IO.File.Exists(filePath))
+        {
+            throw new NotFoundException("PDF file not found in storage.");
+        }
+
+        var content = await System.IO.File.ReadAllBytesAsync(filePath, cancellationToken);
+        return (content, file.FileName);
     }
 
     private async Task<(byte[] Content, string FileName)> GetDocumentPdfContentByTypeAsync(
@@ -222,6 +269,37 @@ public class DocumentService : IDocumentService
         }
 
         return template;
+    }
+
+    private async Task<DocumentTemplate> GetDefaultTemplateOrFallbackAsync(Guid companyId, string documentType, CancellationToken cancellationToken)
+    {
+        var template = await _context.DocumentTemplates
+            .AsNoTracking()
+            .SingleOrDefaultAsync(t =>
+                t.CompanyId == companyId &&
+                t.DocumentType == documentType &&
+                t.IsDefault &&
+                t.IsActive != false, cancellationToken);
+
+        if (template is not null)
+        {
+            return template;
+        }
+
+        return new DocumentTemplate
+        {
+            TemplateId = Guid.NewGuid(),
+            CompanyId = companyId,
+            DocumentType = documentType,
+            TemplateName = $"{documentType} Auto Template",
+            LogoUrl = null,
+            HeaderText = null,
+            FooterText = null,
+            IsDefault = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
     }
 
     private string ResolveReceiptPdfDirectory()
@@ -302,18 +380,18 @@ public class DocumentService : IDocumentService
             .Replace(")", "\\)", StringComparison.Ordinal);
     }
 
-    public async Task<DocumentResponse> CreateTaxInvoiceFromReceiptAsync(Guid receiptId, CreateTaxInvoiceRequest request, CancellationToken cancellationToken = default)
+    public async Task<DocumentResponse> CreateTaxInvoiceFromReceiptAsync(Guid documentId, CreateTaxInvoiceRequest request, CancellationToken cancellationToken = default)
     {
-        if (receiptId == Guid.Empty)
+        if (documentId == Guid.Empty)
         {
-            throw new ValidationException("ReceiptId is required.");
+            throw new ValidationException("DocumentId is required.");
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
 
         var receipt = await _context.Documents
             .Include(d => d.DocumentItems)
-            .SingleOrDefaultAsync(d => d.DocumentId == receiptId, cancellationToken);
+            .SingleOrDefaultAsync(d => d.DocumentId == documentId, cancellationToken);
 
         if (receipt is null)
         {
@@ -332,7 +410,11 @@ public class DocumentService : IDocumentService
 
         var existedTaxInvoice = await _context.Documents
             .AsNoTracking()
-            .AnyAsync(d => d.ReferenceDocumentId == receiptId && d.DocumentType == TaxInvoiceDocumentType, cancellationToken);
+            .AnyAsync(d =>
+                d.ReferenceDocumentId == documentId &&
+                d.DocumentType == TaxInvoiceDocumentType &&
+                d.Status != CancelledStatus,
+                cancellationToken);
 
         if (existedTaxInvoice)
         {
@@ -413,7 +495,7 @@ public class DocumentService : IDocumentService
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        _logger.LogInformation("Tax invoice created: DocumentId={DocumentId}, ReferenceReceiptId={ReceiptId}", taxInvoice.DocumentId, receiptId);
+        _logger.LogInformation("Tax invoice created: DocumentId={DocumentId}, ReferenceReceiptId={ReceiptId}", taxInvoice.DocumentId, documentId);
 
         return MapDocument(taxInvoice);
     }
@@ -441,36 +523,113 @@ public class DocumentService : IDocumentService
             throw new NotFoundException("Document not found.");
         }
 
+        if (document.DocumentType != TaxInvoiceDocumentType)
+        {
+            throw new ConflictException("Cancel is allowed only for tax invoices (TI).");
+        }
+
         if (document.Status == CancelledStatus)
         {
             throw new ConflictException("Document is already cancelled.");
         }
 
+        var company = await _context.Companies
+            .AsNoTracking()
+            .SingleOrDefaultAsync(c => c.CompanyId == document.CompanyId, cancellationToken);
+
+        if (company is null)
+        {
+            throw new NotFoundException("Company not found.");
+        }
+
+        var originalReceiptId = document.ReferenceDocumentId;
         var oldStatus = document.Status;
+        var cancelReason = request.CancelReason.Trim();
+        var cancelledBy = string.IsNullOrWhiteSpace(request.CancelledBy) ? "system" : request.CancelledBy.Trim();
+
         document.Status = CancelledStatus;
+        document.ReferenceDocumentId = null;
+
+        Document? receipt = null;
+        if (originalReceiptId.HasValue)
+        {
+            receipt = await _context.Documents
+                .SingleOrDefaultAsync(d => d.DocumentId == originalReceiptId.Value && d.DocumentType == ReceiptDocumentType, cancellationToken);
+
+            if (receipt is not null)
+            {
+                receipt.TaxInvoiceIssued = false;
+                _context.DocumentAuditLogs.Add(CreateAuditLog(
+                    receipt.DocumentId,
+                    "TaxInvoiceIssued",
+                    new { TaxInvoiceIssued = true },
+                    new { TaxInvoiceIssued = false },
+                    cancelledBy));
+            }
+        }
+
+        var creditNoteTemplate = await GetDefaultTemplateOrFallbackAsync(document.CompanyId, CreditNoteDocumentType, cancellationToken);
+        var creditNoteDate = DateTime.UtcNow;
+        var (runningNumber, yearMonth, documentNo) = await _documentNumberService.GenerateDocumentNumberAsync(
+            document.CompanyId,
+            company.CompanyCode,
+            CreditNoteDocumentType,
+            creditNoteDate,
+            cancellationToken);
+
+        var creditNote = BuildCreditNoteFromCancelledTaxInvoice(
+            document,
+            documentNo,
+            yearMonth,
+            runningNumber,
+            creditNoteDate,
+            cancelReason);
+
+        _context.Documents.Add(creditNote);
 
         _context.DocumentCancelLogs.Add(new DocumentCancelLog
         {
             CancelLogId = Guid.NewGuid(),
             DocumentId = document.DocumentId,
-            CancelReason = request.CancelReason.Trim(),
-            CancelledBy = string.IsNullOrWhiteSpace(request.CancelledBy) ? "system" : request.CancelledBy.Trim(),
-            CancelledAt = DateTime.UtcNow
+            CancelReason = cancelReason,
+            CancelledBy = cancelledBy,
+            CancelledAt = creditNoteDate
         });
 
         _context.DocumentAuditLogs.Add(CreateAuditLog(
             document.DocumentId,
             "Cancelled",
-            new { Status = oldStatus },
-            new { Status = CancelledStatus },
-            request.CancelledBy));
+            new { Status = oldStatus, ReferenceDocumentId = originalReceiptId },
+            new { Status = CancelledStatus, ReferenceDocumentId = (Guid?)null },
+            cancelledBy));
+
+        _context.DocumentAuditLogs.Add(CreateAuditLog(
+            creditNote.DocumentId,
+            "Created",
+            null,
+            new { creditNote.DocumentNo, creditNote.Status, creditNote.ReferenceDocumentId },
+            cancelledBy));
+
+        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(creditNote, "Credit Note", company.CompanyName, creditNoteTemplate, cancellationToken);
+        _context.DocumentFiles.Add(autoPdfFile);
+        _context.DocumentAuditLogs.Add(CreateAuditLog(
+            creditNote.DocumentId,
+            "PdfGenerated",
+            null,
+            new { autoPdfFile.DocumentFileId, autoPdfFile.FileName, autoPdfFile.FileUrl, autoPdfFile.FileHash },
+            cancelledBy));
 
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        _logger.LogInformation("Document cancelled: DocumentId={DocumentId}, DocumentNo={DocumentNo}", document.DocumentId, document.DocumentNo);
+        _logger.LogInformation(
+            "Tax invoice cancelled: DocumentId={DocumentId}, DocumentNo={DocumentNo}, CreditNoteId={CreditNoteId}, CreditNoteNo={CreditNoteNo}",
+            document.DocumentId,
+            document.DocumentNo,
+            creditNote.DocumentId,
+            creditNote.DocumentNo);
 
-        return MapDocument(document);
+        return MapDocument(creditNote);
     }
 
     public async Task<DocumentResponse?> GetDocumentDetailAsync(Guid documentId, CancellationToken cancellationToken = default)
@@ -609,6 +768,64 @@ public class DocumentService : IDocumentService
         target.CustomerBranchNoSnapshot = source.CustomerBranchNoSnapshot;
         target.CustomerAddressSnapshot = source.CustomerAddressSnapshot;
         target.CustomerPostalCodeSnapshot = source.CustomerPostalCodeSnapshot;
+    }
+
+    private static Document BuildCreditNoteFromCancelledTaxInvoice(
+        Document source,
+        string documentNo,
+        string runningYearMonth,
+        int runningNumber,
+        DateTime issueDate,
+        string cancelReason)
+    {
+        var creditNote = new Document
+        {
+            DocumentId = Guid.NewGuid(),
+            CompanyId = source.CompanyId,
+            CustomerId = source.CustomerId,
+            CompanyNameSnapshot = source.CompanyNameSnapshot,
+            CompanyTaxIdSnapshot = source.CompanyTaxIdSnapshot,
+            CompanyBranchNoSnapshot = source.CompanyBranchNoSnapshot,
+            CompanyAddressSnapshot = source.CompanyAddressSnapshot,
+            CustomerNameSnapshot = source.CustomerNameSnapshot,
+            CustomerTypeSnapshot = source.CustomerTypeSnapshot,
+            CustomerTaxIdSnapshot = source.CustomerTaxIdSnapshot,
+            CustomerBranchNoSnapshot = source.CustomerBranchNoSnapshot,
+            CustomerAddressSnapshot = source.CustomerAddressSnapshot,
+            CustomerPostalCodeSnapshot = source.CustomerPostalCodeSnapshot,
+            SourceType = source.SourceType,
+            SourceId = source.SourceId,
+            SourceNo = source.SourceNo,
+            ReferenceDocumentId = source.DocumentId,
+            DocumentType = CreditNoteDocumentType,
+            DocumentNo = documentNo,
+            RunningYearMonth = runningYearMonth,
+            RunningNumber = runningNumber,
+            IssueDate = issueDate,
+            SubTotal = decimal.Negate(source.SubTotal),
+            VatAmount = decimal.Negate(source.VatAmount),
+            GrandTotal = decimal.Negate(source.GrandTotal),
+            Status = IssuedStatus,
+            Remark = cancelReason,
+            TaxInvoiceIssued = false
+        };
+
+        foreach (var sourceItem in source.DocumentItems)
+        {
+            creditNote.DocumentItems.Add(new DocumentItem
+            {
+                DocumentItemId = Guid.NewGuid(),
+                ItemCode = sourceItem.ItemCode,
+                ItemName = sourceItem.ItemName,
+                Quantity = decimal.Negate(sourceItem.Quantity),
+                UnitPrice = sourceItem.UnitPrice,
+                Amount = decimal.Negate(sourceItem.Amount),
+                VatRate = sourceItem.VatRate,
+                VatAmount = decimal.Negate(sourceItem.VatAmount)
+            });
+        }
+
+        return creditNote;
     }
 
     private static DocumentAuditLog CreateAuditLog(Guid documentId, string action, object? oldValue, object? newValue, string? createdBy = null)
