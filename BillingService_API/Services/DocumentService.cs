@@ -292,7 +292,7 @@ public class DocumentService : IDocumentService
             CompanyId = companyId,
             DocumentType = documentType,
             TemplateName = $"{documentType} Auto Template",
-            LogoUrl = null,
+            LogoPath = null,
             HeaderText = null,
             FooterText = null,
             IsDefault = true,
@@ -319,7 +319,7 @@ public class DocumentService : IDocumentService
     {
         var header = string.IsNullOrWhiteSpace(template.HeaderText) ? "-" : template.HeaderText!;
         var footer = string.IsNullOrWhiteSpace(template.FooterText) ? "-" : template.FooterText!;
-        var logoUrl = string.IsNullOrWhiteSpace(template.LogoUrl) ? "-" : template.LogoUrl!;
+        var logoPath = string.IsNullOrWhiteSpace(template.LogoPath) ? "-" : template.LogoPath!;
         var templateName = string.IsNullOrWhiteSpace(template.TemplateName) ? "-" : template.TemplateName;
 
         var lines = new[]
@@ -332,7 +332,7 @@ public class DocumentService : IDocumentService
             $"BT /F1 10 Tf 50 705 Td ({EscapePdfText($"Grand Total: {document.GrandTotal:0.00}")}) Tj ET",
             $"BT /F1 10 Tf 50 690 Td ({EscapePdfText($"Header: {header}")}) Tj ET",
             $"BT /F1 10 Tf 50 675 Td ({EscapePdfText($"Footer: {footer}")}) Tj ET",
-            $"BT /F1 10 Tf 50 660 Td ({EscapePdfText($"LogoUrl: {logoUrl}")}) Tj ET"
+            $"BT /F1 10 Tf 50 660 Td ({EscapePdfText($"LogoPath: {logoPath}")}) Tj ET"
         };
         var content = string.Join("\n", lines);
         var contentBytes = Encoding.ASCII.GetBytes(content);
