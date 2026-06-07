@@ -37,7 +37,7 @@ public partial class BillingServiceContext : DbContext
     public virtual DbSet<DocumentTemplate> DocumentTemplates { get; set; }
 
     public virtual DbSet<DocumentType> DocumentTypes { get; set; }
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -504,8 +504,8 @@ public partial class BillingServiceContext : DbContext
                 .HasDefaultValueSql("'1'")
                 .HasComment("สถานะการใช้งาน");
             entity.Property(e => e.IsDefault).HasComment("เป็น Template หลักหรือไม่");
-            entity.Property(e => e.LogoUrl)
-                .HasComment("URL Logo")
+            entity.Property(e => e.LogoPath)
+                .HasComment("Path รูปโลโก้")
                 .HasColumnType("text");
             entity.Property(e => e.TemplateName)
                 .HasMaxLength(255)

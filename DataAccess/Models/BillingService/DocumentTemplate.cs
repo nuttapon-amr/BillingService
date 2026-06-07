@@ -29,9 +29,9 @@ public partial class DocumentTemplate
     public string TemplateName { get; set; } = null!;
 
     /// <summary>
-    /// URL Logo
+    /// Path รูปโลโก้
     /// </summary>
-    public string? LogoUrl { get; set; }
+    public string? LogoPath { get; set; }
 
     /// <summary>
     /// ข้อความส่วนหัวเอกสาร
