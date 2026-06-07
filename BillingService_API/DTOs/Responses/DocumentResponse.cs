@@ -30,6 +30,13 @@ public class DocumentResponse
     public decimal GrandTotal { get; set; }
     public string? Remark { get; set; }
     public Guid? ReferenceDocumentId { get; set; }
+    public string? OriginalDocumentNoSnapshot { get; set; }
+    public DateTime? OriginalIssueDateSnapshot { get; set; }
+    public string? OriginalDocumentTypeSnapshot { get; set; }
+    public decimal? OriginalSubTotalSnapshot { get; set; }
+    public decimal? OriginalVatAmountSnapshot { get; set; }
+    public decimal? OriginalGrandTotalSnapshot { get; set; }
+    public string? CreditNoteReasonSnapshot { get; set; }
     public bool TaxInvoiceIssued { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

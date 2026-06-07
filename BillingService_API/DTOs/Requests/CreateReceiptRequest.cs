@@ -42,7 +42,7 @@ public class CreateReceiptItemRequest
     public decimal Quantity { get; set; }
 
     [Range(0, double.MaxValue)]
-    public decimal UnitPrice { get; set; }
+    public decimal UnitPrice { get; set; } // ราคาต่อหน่วยรวม VAT
 
     [Range(0, 100)]
     public decimal VatRate { get; set; }

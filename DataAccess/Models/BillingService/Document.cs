@@ -94,6 +94,41 @@ public partial class Document
     public Guid? ReferenceDocumentId { get; set; }
 
     /// <summary>
+    /// เลขเอกสารต้นฉบับสำหรับใบลดหนี้
+    /// </summary>
+    public string? OriginalDocumentNoSnapshot { get; set; }
+
+    /// <summary>
+    /// วันที่ออกเอกสารต้นฉบับ
+    /// </summary>
+    public DateTime? OriginalIssueDateSnapshot { get; set; }
+
+    /// <summary>
+    /// ประเภทเอกสารต้นฉบับ
+    /// </summary>
+    public string? OriginalDocumentTypeSnapshot { get; set; }
+
+    /// <summary>
+    /// ยอดก่อนภาษีของเอกสารต้นฉบับ
+    /// </summary>
+    public decimal? OriginalSubTotalSnapshot { get; set; }
+
+    /// <summary>
+    /// ยอดภาษีมูลค่าเพิ่มของเอกสารต้นฉบับ
+    /// </summary>
+    public decimal? OriginalVatAmountSnapshot { get; set; }
+
+    /// <summary>
+    /// ยอดรวมสุทธิของเอกสารต้นฉบับ
+    /// </summary>
+    public decimal? OriginalGrandTotalSnapshot { get; set; }
+
+    /// <summary>
+    /// เหตุผลการออกใบลดหนี้
+    /// </summary>
+    public string? CreditNoteReasonSnapshot { get; set; }
+
+    /// <summary>
     /// ประเภทเอกสาร RC=ใบเสร็จ, TI=ใบกำกับภาษี, CN=ใบลดหนี้, DN=ใบเพิ่มหนี้
     /// </summary>
     public string DocumentType { get; set; } = null!;

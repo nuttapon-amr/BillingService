@@ -183,6 +183,9 @@ public partial class BillingServiceContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasComment("วันที่สร้างข้อมูล")
                 .HasColumnType("datetime");
+            entity.Property(e => e.CreditNoteReasonSnapshot)
+                .HasMaxLength(255)
+                .HasComment("เหตุผลการออกใบลดหนี้");
             entity.Property(e => e.CustomerAddressSnapshot)
                 .HasComment("ที่อยู่ ณ วันที่ออกเอกสาร")
                 .HasColumnType("text");
@@ -217,6 +220,24 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.IssueDate)
                 .HasComment("วันที่ออกเอกสาร")
                 .HasColumnType("datetime");
+            entity.Property(e => e.OriginalDocumentNoSnapshot)
+                .HasMaxLength(50)
+                .HasComment("เลขเอกสารต้นฉบับสำหรับใบลดหนี้");
+            entity.Property(e => e.OriginalDocumentTypeSnapshot)
+                .HasMaxLength(20)
+                .HasComment("ประเภทเอกสารต้นฉบับ");
+            entity.Property(e => e.OriginalGrandTotalSnapshot)
+                .HasPrecision(18, 2)
+                .HasComment("ยอดรวมสุทธิของเอกสารต้นฉบับ");
+            entity.Property(e => e.OriginalIssueDateSnapshot)
+                .HasComment("วันที่ออกเอกสารต้นฉบับ")
+                .HasColumnType("datetime");
+            entity.Property(e => e.OriginalSubTotalSnapshot)
+                .HasPrecision(18, 2)
+                .HasComment("ยอดก่อนภาษีของเอกสารต้นฉบับ");
+            entity.Property(e => e.OriginalVatAmountSnapshot)
+                .HasPrecision(18, 2)
+                .HasComment("ยอด VAT ของเอกสารต้นฉบับ");
             entity.Property(e => e.ReferenceDocumentId).HasComment("เอกสารอ้างอิง เช่น TI อ้างอิง RC เดิม");
             entity.Property(e => e.Remark)
                 .HasComment("หมายเหตุ")

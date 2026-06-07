@@ -7,6 +7,7 @@ using DataAccess.Models.BillingService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
+using MySqlConnector;
 
 namespace BillingService_API.Services;
 
@@ -52,7 +53,14 @@ public class DocumentService : IDocumentService
         {
             throw new NotFoundException("Company not found.");
         }
+
+        if (!request.CustomerId.HasValue)
+        {
+            throw new ValidationException("CustomerId is required for receipt.");
+        }
+
         var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
+        ValidateReceiptCustomer(customer);
         var template = await GetDefaultTemplateAsync(request.CompanyId, ReceiptDocumentType, cancellationToken);
 
         var (subTotal, vatAmount, grandTotal, itemEntities) = BuildItemsAndTotals(request.Items);
@@ -153,7 +161,7 @@ public class DocumentService : IDocumentService
 
         var fileName = $"{document.DocumentNo}.pdf";
         var filePath = Path.Combine(receiptsDir, fileName);
-        var pdfBytes = BuildSimplePdfBytes(document, companyName, title, template);
+        var pdfBytes = BuildTemplatePdfBytes(document, companyName, title, template);
         await File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
 
         return new DocumentFile
@@ -315,61 +323,9 @@ public class DocumentService : IDocumentService
         return Path.Combine(webRootPath, "files", "receipts");
     }
 
-    private static byte[] BuildSimplePdfBytes(Document document, string companyName, string title, DocumentTemplate template)
+    private static byte[] BuildTemplatePdfBytes(Document document, string companyName, string title, DocumentTemplate template)
     {
-        var header = string.IsNullOrWhiteSpace(template.HeaderText) ? "-" : template.HeaderText!;
-        var footer = string.IsNullOrWhiteSpace(template.FooterText) ? "-" : template.FooterText!;
-        var logoPath = string.IsNullOrWhiteSpace(template.LogoPath) ? "-" : template.LogoPath!;
-        var templateName = string.IsNullOrWhiteSpace(template.TemplateName) ? "-" : template.TemplateName;
-
-        var lines = new[]
-        {
-            $"BT /F1 14 Tf 50 780 Td ({EscapePdfText(title)}) Tj ET",
-            $"BT /F1 10 Tf 50 765 Td ({EscapePdfText($"Template: {templateName}")}) Tj ET",
-            $"BT /F1 10 Tf 50 750 Td ({EscapePdfText($"Document No: {document.DocumentNo}")}) Tj ET",
-            $"BT /F1 10 Tf 50 735 Td ({EscapePdfText($"Company: {companyName}")}) Tj ET",
-            $"BT /F1 10 Tf 50 720 Td ({EscapePdfText($"Issue Date: {document.IssueDate:yyyy-MM-dd HH:mm:ss}")}) Tj ET",
-            $"BT /F1 10 Tf 50 705 Td ({EscapePdfText($"Grand Total: {document.GrandTotal:0.00}")}) Tj ET",
-            $"BT /F1 10 Tf 50 690 Td ({EscapePdfText($"Header: {header}")}) Tj ET",
-            $"BT /F1 10 Tf 50 675 Td ({EscapePdfText($"Footer: {footer}")}) Tj ET",
-            $"BT /F1 10 Tf 50 660 Td ({EscapePdfText($"LogoPath: {logoPath}")}) Tj ET"
-        };
-        var content = string.Join("\n", lines);
-        var contentBytes = Encoding.ASCII.GetBytes(content);
-
-        var objects = new List<string>
-        {
-            "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
-            "2 0 obj\n<< /Type /Pages /Count 1 /Kids [3 0 R] >>\nendobj\n",
-            "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n",
-            "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
-            $"5 0 obj\n<< /Length {contentBytes.Length} >>\nstream\n{content}\nendstream\nendobj\n"
-        };
-
-        var ms = new MemoryStream();
-        using var writer = new StreamWriter(ms, Encoding.ASCII, leaveOpen: true);
-        writer.Write("%PDF-1.4\n");
-        writer.Flush();
-
-        var offsets = new List<long> { 0 };
-        foreach (var obj in objects)
-        {
-            offsets.Add(ms.Position);
-            writer.Write(obj);
-            writer.Flush();
-        }
-
-        var xrefPos = ms.Position;
-        writer.Write($"xref\n0 {objects.Count + 1}\n");
-        writer.Write("0000000000 65535 f \n");
-        for (var i = 1; i <= objects.Count; i++)
-        {
-            writer.Write($"{offsets[i]:D10} 00000 n \n");
-        }
-
-        writer.Write($"trailer\n<< /Size {objects.Count + 1} /Root 1 0 R >>\nstartxref\n{xrefPos}\n%%EOF");
-        writer.Flush();
-        return ms.ToArray();
+        return DocumentPdfBuilder.Build(document, companyName, title, template);
     }
 
     private static string EscapePdfText(string input)
@@ -378,6 +334,231 @@ public class DocumentService : IDocumentService
             .Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("(", "\\(", StringComparison.Ordinal)
             .Replace(")", "\\)", StringComparison.Ordinal);
+    }
+
+    private static string ResolveLogoDisplayText(string? logoPath)
+    {
+        if (string.IsNullOrWhiteSpace(logoPath))
+        {
+            return "-";
+        }
+
+        var trimmed = logoPath.Trim();
+        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            return $"LogoUrl: {trimmed}";
+        }
+
+        if (Path.IsPathRooted(trimmed))
+        {
+            return $"LogoPath: {trimmed}";
+        }
+
+        var localPath = Path.Combine(AppContext.BaseDirectory, trimmed);
+        if (File.Exists(localPath))
+        {
+            return $"LogoPath: {localPath}";
+        }
+
+        return $"LogoPath: {trimmed}";
+    }
+
+    private static void AddPdfGraphicsHeader(List<string> lines)
+    {
+        lines.Add("0.15 0.2 0.28 rg");
+        lines.Add("0.15 0.2 0.28 RG");
+        lines.Add("0.8 w");
+        lines.Add("0.96 0.96 0.96 rg");
+    }
+
+    private static void AddPdfRect(List<string> lines, double x, double y, double width, double height, bool stroke = true, bool fill = false)
+    {
+        lines.Add($"{FormatPdfNumber(x)} {FormatPdfNumber(y)} {FormatPdfNumber(width)} {FormatPdfNumber(height)} re {(fill && stroke ? "B" : fill ? "f" : "S")}");
+    }
+
+    private static void AddPdfFilledRect(List<string> lines, double x, double y, double width, double height, string rgb)
+    {
+        lines.Add($"{rgb} rg");
+        lines.Add($"{FormatPdfNumber(x)} {FormatPdfNumber(y)} {FormatPdfNumber(width)} {FormatPdfNumber(height)} re f");
+        lines.Add("0 0 0 rg");
+    }
+
+    private static void AddPdfLine(List<string> lines, double x1, double y1, double x2, double y2, double width)
+    {
+        lines.Add($"{FormatPdfNumber(width)} w");
+        lines.Add($"{FormatPdfNumber(x1)} {FormatPdfNumber(y1)} m {FormatPdfNumber(x2)} {FormatPdfNumber(y2)} l S");
+        lines.Add("0.8 w");
+    }
+
+    private static void AddPdfText(
+        List<string> lines,
+        double x,
+        double y,
+        int fontSize,
+        string text,
+        bool bold = false,
+        bool alignRight = false,
+        int maxChars = 60)
+    {
+        var font = bold ? "/F2" : "/F1";
+        var safeText = EscapePdfText(TruncateText(text, maxChars));
+        var effectiveX = alignRight ? x - (safeText.Length * fontSize * 0.42) : x;
+        lines.Add($"BT {font} {fontSize} Tf {FormatPdfNumber(effectiveX)} {FormatPdfNumber(y)} Td ({safeText}) Tj ET");
+    }
+
+    private static void AddSectionHeader(List<string> lines, double x, double y, double width, string title)
+    {
+        AddPdfFilledRect(lines, x, y, width, 18, "0.88 0.90 0.93");
+        AddPdfRect(lines, x, y, width, 18);
+        AddPdfText(lines, x + 6, y + 5, 8, title, bold: true, maxChars: 42);
+    }
+
+    private static void AddKeyValueBlock(List<string> lines, double x, double yTop, double width, IEnumerable<(string Label, string Value)> rows)
+    {
+        var y = yTop;
+        foreach (var (label, value) in rows)
+        {
+            AddPdfText(lines, x + 6, y, 8, $"{label}:", bold: true, maxChars: 16);
+            AddPdfText(lines, x + 70, y, 8, value, maxChars: 30);
+            y -= 14;
+        }
+
+        AddPdfRect(lines, x, y + 2, width, yTop - y + 2);
+    }
+
+    private static void AddItemsTable(List<string> lines, Document document)
+    {
+        var left = 42.0;
+        var top = 480.0;
+        var tableWidth = 510.0;
+        var rowHeight = 16.0;
+
+        var columns = new[]
+        {
+            (Title: "No", X: left, Width: 22.0),
+            (Title: "Item", X: left + 22, Width: 200.0),
+            (Title: "Qty", X: left + 222, Width: 40.0),
+            (Title: "Unit", X: left + 262, Width: 56.0),
+            (Title: "Amount", X: left + 318, Width: 70.0),
+            (Title: "VAT", X: left + 388, Width: 50.0),
+            (Title: "Line Total", X: left + 438, Width: 114.0)
+        };
+
+        AddPdfFilledRect(lines, left, top, tableWidth, rowHeight, "0.15 0.2 0.28");
+        AddPdfRect(lines, left, top, tableWidth, rowHeight);
+        foreach (var column in columns)
+        {
+            AddPdfText(lines, column.X + 2, top + 5, 7, column.Title, bold: true, maxChars: 18);
+        }
+
+        var rowY = top - rowHeight;
+        var items = document.DocumentItems.Take(6).ToList();
+        if (items.Count == 0)
+        {
+            AddPdfRect(lines, left, rowY, tableWidth, rowHeight);
+            AddPdfText(lines, left + 8, rowY + 5, 8, "No items found.", maxChars: 48);
+            return;
+        }
+
+        for (var index = 0; index < items.Count; index++)
+        {
+            var item = items[index];
+            AddPdfRect(lines, left, rowY, tableWidth, rowHeight);
+            AddPdfText(lines, columns[0].X + 2, rowY + 5, 7, (index + 1).ToString(), maxChars: 4);
+            AddPdfText(lines, columns[1].X + 2, rowY + 5, 7, FormatOrDash(item.ItemName), maxChars: 36);
+            AddPdfText(lines, columns[2].X + 2, rowY + 5, 7, item.Quantity.ToString("0.##"), maxChars: 8);
+            AddPdfText(lines, columns[3].X + 2, rowY + 5, 7, item.UnitPrice.ToString("0.00"), maxChars: 10);
+            AddPdfText(lines, columns[4].X + 2, rowY + 5, 7, item.Amount.ToString("0.00"), maxChars: 12);
+            AddPdfText(lines, columns[5].X + 2, rowY + 5, 7, item.VatAmount.ToString("0.00"), maxChars: 10);
+            AddPdfText(lines, columns[6].X + 2, rowY + 5, 7, (item.Amount + item.VatAmount).ToString("0.00"), maxChars: 12);
+            rowY -= rowHeight;
+        }
+
+        if (document.DocumentItems.Count > items.Count)
+        {
+            AddPdfText(lines, left, rowY - 2, 7, $"Showing first {items.Count} of {document.DocumentItems.Count} items.", maxChars: 44);
+        }
+    }
+
+    private static void AddSummaryBox(List<string> lines, Document document)
+    {
+        var x = 360.0;
+        var y = 292.0;
+        var width = 192.0;
+        var height = 82.0;
+
+        AddPdfRect(lines, x, y, width, height);
+        AddPdfFilledRect(lines, x, y + 66, width, 16, "0.94 0.95 0.97");
+        AddPdfText(lines, x + 8, y + 71, 8, "Financial Summary", bold: true, maxChars: 24);
+
+        var rows = new[]
+        {
+            ("Sub Total", document.SubTotal),
+            ("VAT", document.VatAmount),
+            ("Grand Total", document.GrandTotal)
+        };
+
+        var rowY = y + 48;
+        foreach (var row in rows)
+        {
+            AddPdfText(lines, x + 8, rowY, 8, row.Item1, bold: true, maxChars: 12);
+            AddPdfText(lines, x + 120, rowY, 8, row.Item2.ToString("0.00"), alignRight: true, maxChars: 14);
+            rowY -= 15;
+        }
+    }
+
+    private static void AddNotesBlock(List<string> lines, Document document, string footer)
+    {
+        var x = 42.0;
+        var y = 148.0;
+        var width = 244.0;
+        var height = 62.0;
+
+        AddPdfRect(lines, x, y, width, height);
+        AddPdfText(lines, x + 8, y + 46, 8, $"Reference: {FormatOrDash(document.SourceNo)}", maxChars: 36);
+        AddPdfText(lines, x + 8, y + 32, 8, $"Remark: {FormatOrDash(document.Remark)}", maxChars: 36);
+        AddPdfText(lines, x + 8, y + 18, 8, $"Footer: {footer}", maxChars: 36);
+        AddPdfText(lines, x + 8, y + 6, 7, $"Type: {document.DocumentType} | Status: {document.Status}", maxChars: 42);
+    }
+
+    private static void AddSignatureBlock(List<string> lines)
+    {
+        var x = 308.0;
+        var y = 148.0;
+        var width = 244.0;
+        var height = 62.0;
+
+        AddPdfRect(lines, x, y, width, height);
+        AddPdfLine(lines, x + 18, y + 22, x + 104, y + 22, 0.5);
+        AddPdfLine(lines, x + 132, y + 22, x + 218, y + 22, 0.5);
+        AddPdfText(lines, x + 26, y + 10, 7, "Authorized Signature", maxChars: 22);
+        AddPdfText(lines, x + 140, y + 10, 7, "Receiver Acknowledgement", maxChars: 22);
+    }
+
+    private static string FormatOrDash(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "-" : value.Trim();
+    }
+
+    private static string TruncateText(string text, int maxChars)
+    {
+        if (maxChars <= 0 || text.Length <= maxChars)
+        {
+            return text;
+        }
+
+        if (maxChars <= 1)
+        {
+            return text[..1];
+        }
+
+        return text[..(maxChars - 1)] + "…";
+    }
+
+    private static string FormatPdfNumber(double value)
+    {
+        return value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public async Task<DocumentResponse> CreateTaxInvoiceFromReceiptAsync(Guid documentId, CreateTaxInvoiceRequest request, CancellationToken cancellationToken = default)
@@ -408,17 +589,25 @@ public class DocumentService : IDocumentService
             throw new ConflictException("Tax invoice can only be created from issued receipt.");
         }
 
-        var existedTaxInvoice = await _context.Documents
-            .AsNoTracking()
-            .AnyAsync(d =>
+        var existingTaxInvoice = await _context.Documents
+            .SingleOrDefaultAsync(d =>
                 d.ReferenceDocumentId == documentId &&
-                d.DocumentType == TaxInvoiceDocumentType &&
-                d.Status != CancelledStatus,
+                d.DocumentType == TaxInvoiceDocumentType,
                 cancellationToken);
 
-        if (existedTaxInvoice)
+        if (existingTaxInvoice is not null && existingTaxInvoice.Status != CancelledStatus)
         {
             throw new ConflictException("This receipt already has a tax invoice.");
+        }
+
+        if (existingTaxInvoice is not null && existingTaxInvoice.Status == CancelledStatus && existingTaxInvoice.ReferenceDocumentId.HasValue)
+        {
+            _logger.LogInformation(
+                "Clearing reference from cancelled tax invoice DocumentId={TaxInvoiceId} to allow reissue for ReceiptId={ReceiptId}",
+                existingTaxInvoice.DocumentId,
+                documentId);
+
+            existingTaxInvoice.ReferenceDocumentId = null;
         }
 
         var company = await _context.Companies
@@ -429,6 +618,13 @@ public class DocumentService : IDocumentService
         {
             throw new NotFoundException("Company not found.");
         }
+
+        var customer = receipt.CustomerId.HasValue
+            ? await _context.Customers
+                .AsNoTracking()
+                .SingleOrDefaultAsync(c => c.CustomerId == receipt.CustomerId.Value, cancellationToken)
+            : null;
+
         var template = await GetDefaultTemplateAsync(receipt.CompanyId, TaxInvoiceDocumentType, cancellationToken);
 
         var (runningNumber, yearMonth, documentNo) = await _documentNumberService.GenerateDocumentNumberAsync(
@@ -463,6 +659,7 @@ public class DocumentService : IDocumentService
         ApplyCompanySnapshot(taxInvoice, company);
 
         CopyReceiverSnapshotFromReceipt(taxInvoice, receipt);
+        ApplyReceiverSnapshotFallback(taxInvoice, customer);
 
         foreach (var sourceItem in receipt.DocumentItems)
         {
@@ -492,8 +689,38 @@ public class DocumentService : IDocumentService
             new { autoPdfFile.DocumentFileId, autoPdfFile.FileName, autoPdfFile.FileUrl, autoPdfFile.FileHash }));
         _context.DocumentAuditLogs.Add(CreateAuditLog(receipt.DocumentId, "TaxInvoiceIssued", new { TaxInvoiceIssued = false }, new { TaxInvoiceIssued = true }));
 
-        await _context.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            _logger.LogInformation(
+                "Saving tax invoice DocumentNo={DocumentNo} for ReceiptId={ReceiptId}",
+                taxInvoice.DocumentNo,
+                documentId);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            _logger.LogError(
+                ex,
+                "Failed to save tax invoice DocumentNo={DocumentNo} for ReceiptId={ReceiptId}",
+                taxInvoice.DocumentNo,
+                documentId);
+
+            if (IsDuplicateKey(ex))
+            {
+                throw new ConflictException(
+                    "Unable to create tax invoice because a duplicate record already exists. If this receipt had a cancelled tax invoice created before the cancellation fix, the old reference must be cleared first.");
+            }
+
+            throw new ValidationException("Unable to create tax invoice due to a database constraint failure.");
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
 
         _logger.LogInformation("Tax invoice created: DocumentId={DocumentId}, ReferenceReceiptId={ReceiptId}", taxInvoice.DocumentId, documentId);
 
@@ -548,6 +775,8 @@ public class DocumentService : IDocumentService
         var cancelledBy = string.IsNullOrWhiteSpace(request.CancelledBy) ? "system" : request.CancelledBy.Trim();
 
         document.Status = CancelledStatus;
+        // Release the receipt reference so the same receipt can be re-issued with a new tax invoice
+        // after cancellation. The cancelled invoice remains traceable through the credit note and audit logs.
         document.ReferenceDocumentId = null;
 
         Document? receipt = null;
@@ -713,8 +942,11 @@ public class DocumentService : IDocumentService
                 throw new ValidationException("UnitPrice and VatRate must be non-negative.");
             }
 
-            var amount = decimal.Round(item.Quantity * item.UnitPrice, 2, MidpointRounding.AwayFromZero);
-            var itemVatAmount = decimal.Round(amount * item.VatRate / 100m, 2, MidpointRounding.AwayFromZero);
+            var grossAmount = decimal.Round(item.Quantity * item.UnitPrice, 2, MidpointRounding.AwayFromZero);
+            var itemVatAmount = item.VatRate <= 0
+                ? 0m
+                : decimal.Round(grossAmount * item.VatRate / (100m + item.VatRate), 2, MidpointRounding.AwayFromZero);
+            var amount = decimal.Round(grossAmount - itemVatAmount, 2, MidpointRounding.AwayFromZero);
 
             subTotal += amount;
             vatAmount += itemVatAmount;
@@ -747,6 +979,42 @@ public class DocumentService : IDocumentService
         document.CompanyAddressSnapshot = company.Address;
     }
 
+    private static void ValidateReceiptCustomer(Customer? customer)
+    {
+        if (customer is null)
+        {
+            throw new NotFoundException("Customer not found.");
+        }
+
+        var missingFields = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(customer.TaxId))
+        {
+            missingFields.Add("TaxId");
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.BranchNo))
+        {
+            missingFields.Add("BranchNo");
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.Address))
+        {
+            missingFields.Add("Address");
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.PostalCode))
+        {
+            missingFields.Add("PostalCode");
+        }
+
+        if (missingFields.Count > 0)
+        {
+            throw new ValidationException(
+                $"Customer data is incomplete for receipt. Missing fields: {string.Join(", ", missingFields)}.");
+        }
+    }
+
     private static void ApplyReceiverSnapshot(Document document, Customer? customer)
     {
         if (customer is not null)
@@ -768,6 +1036,21 @@ public class DocumentService : IDocumentService
         target.CustomerBranchNoSnapshot = source.CustomerBranchNoSnapshot;
         target.CustomerAddressSnapshot = source.CustomerAddressSnapshot;
         target.CustomerPostalCodeSnapshot = source.CustomerPostalCodeSnapshot;
+    }
+
+    private static void ApplyReceiverSnapshotFallback(Document target, Customer? customer)
+    {
+        if (customer is null)
+        {
+            return;
+        }
+
+        target.CustomerNameSnapshot ??= customer.CustomerName;
+        target.CustomerTypeSnapshot ??= customer.CustomerType;
+        target.CustomerTaxIdSnapshot ??= customer.TaxId;
+        target.CustomerBranchNoSnapshot ??= customer.BranchNo;
+        target.CustomerAddressSnapshot ??= customer.Address;
+        target.CustomerPostalCodeSnapshot ??= customer.PostalCode;
     }
 
     private static Document BuildCreditNoteFromCancelledTaxInvoice(
@@ -797,6 +1080,13 @@ public class DocumentService : IDocumentService
             SourceId = source.SourceId,
             SourceNo = source.SourceNo,
             ReferenceDocumentId = source.DocumentId,
+            OriginalDocumentNoSnapshot = source.DocumentNo,
+            OriginalIssueDateSnapshot = source.IssueDate,
+            OriginalDocumentTypeSnapshot = source.DocumentType,
+            OriginalSubTotalSnapshot = source.SubTotal,
+            OriginalVatAmountSnapshot = source.VatAmount,
+            OriginalGrandTotalSnapshot = source.GrandTotal,
+            CreditNoteReasonSnapshot = cancelReason,
             DocumentType = CreditNoteDocumentType,
             DocumentNo = documentNo,
             RunningYearMonth = runningYearMonth,
@@ -874,6 +1164,13 @@ public class DocumentService : IDocumentService
             GrandTotal = document.GrandTotal,
             Remark = document.Remark,
             ReferenceDocumentId = document.ReferenceDocumentId,
+            OriginalDocumentNoSnapshot = document.OriginalDocumentNoSnapshot,
+            OriginalIssueDateSnapshot = document.OriginalIssueDateSnapshot,
+            OriginalDocumentTypeSnapshot = document.OriginalDocumentTypeSnapshot,
+            OriginalSubTotalSnapshot = document.OriginalSubTotalSnapshot,
+            OriginalVatAmountSnapshot = document.OriginalVatAmountSnapshot,
+            OriginalGrandTotalSnapshot = document.OriginalGrandTotalSnapshot,
+            CreditNoteReasonSnapshot = document.CreditNoteReasonSnapshot,
             TaxInvoiceIssued = document.TaxInvoiceIssued,
             CreatedAt = document.CreatedAt,
             UpdatedAt = document.UpdatedAt,
@@ -889,6 +1186,11 @@ public class DocumentService : IDocumentService
                 VatAmount = item.VatAmount
             }).ToList()
         };
+    }
+
+    private static bool IsDuplicateKey(DbUpdateException ex)
+    {
+        return ex.InnerException is MySqlException { Number: 1062 };
     }
 
 }
