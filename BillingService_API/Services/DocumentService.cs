@@ -60,7 +60,6 @@ public class DocumentService : IDocumentService
         }
 
         var customer = await GetCustomerAsync(request.CustomerId, cancellationToken);
-        ValidateReceiptCustomer(customer);
         var template = await GetDefaultTemplateAsync(request.CompanyId, ReceiptDocumentType, cancellationToken);
 
         var (subTotal, vatAmount, grandTotal, itemEntities) = BuildItemsAndTotals(request.Items);
@@ -977,42 +976,6 @@ public class DocumentService : IDocumentService
         document.CompanyTaxIdSnapshot = company.TaxId;
         document.CompanyBranchNoSnapshot = company.BranchNo;
         document.CompanyAddressSnapshot = company.Address;
-    }
-
-    private static void ValidateReceiptCustomer(Customer? customer)
-    {
-        if (customer is null)
-        {
-            throw new NotFoundException("Customer not found.");
-        }
-
-        var missingFields = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(customer.TaxId))
-        {
-            missingFields.Add("TaxId");
-        }
-
-        if (string.IsNullOrWhiteSpace(customer.BranchNo))
-        {
-            missingFields.Add("BranchNo");
-        }
-
-        if (string.IsNullOrWhiteSpace(customer.Address))
-        {
-            missingFields.Add("Address");
-        }
-
-        if (string.IsNullOrWhiteSpace(customer.PostalCode))
-        {
-            missingFields.Add("PostalCode");
-        }
-
-        if (missingFields.Count > 0)
-        {
-            throw new ValidationException(
-                $"Customer data is incomplete for receipt. Missing fields: {string.Join(", ", missingFields)}.");
-        }
     }
 
     private static void ApplyReceiverSnapshot(Document document, Customer? customer)
