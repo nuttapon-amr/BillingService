@@ -43,9 +43,9 @@ internal static class DocumentPdfBuilder
         var documentTitle = ResolveDocumentTitle(documentType, title, hasVat);
         var logoPath = ResolveLogoPath(template.LogoPath);
         var logoAvailable = !string.IsNullOrWhiteSpace(logoPath) && File.Exists(logoPath);
-        var itemRows = BuildItemRows(document, hasVat);
+        var itemRows = BuildItemRows(document, hasVat, flipSign: documentType == "CN");
 
-        if (isTaxInvoice || isReceipt)
+        if (isTaxInvoice || isReceipt || isCreditNote)
         {
             var templateReport = TryCreateTemplateReport(document, companyName, template, documentType, documentTitle, itemRows, logoPath, logoAvailable, hasVat);
             if (templateReport is not null)
@@ -123,13 +123,23 @@ internal static class DocumentPdfBuilder
                 dataSource.Enabled = true;
             }
 
-            if (documentType == "TI")
-            {
-                BindTiTemplate(report, document, companyName, template, documentTitle, logoPath, logoAvailable, hasVat);
-            }
-            else if (documentType == "RC")
+            if (documentType == "TI" || documentType == "RC")
             {
                 BindRcTemplate(report, document, companyName, template, logoPath, logoAvailable, hasVat, itemRows);
+            }
+            else if (documentType == "CN")
+            {
+                BindRcTemplate(report, document, companyName, template, logoPath, logoAvailable, hasVat, itemRows);
+                SetText(report, "InfoTermValue", FormatOrDash(document.ReferenceDocumentNoSnapshot));
+                SetText(report, "InfoRefValue", FormatDateOrDash(document.ReferenceIssueDateSnapshot));
+                // DB stores CN amounts as negative; flip to positive for PDF display
+                var discount = document.DocumentItems.Sum(item => item.DiscountAmount ?? 0m);
+                SetText(report, "TotalValue1", FormatMoneyOrDash(-document.SubTotal));
+                SetText(report, "TotalValue2", FormatMoneyOrDash(discount));
+                SetText(report, "TotalValue3", FormatMoneyOrDash(-document.SubTotal - discount));
+                SetText(report, "TotalValue4", FormatMoneyOrDash(-document.VatAmount));
+                SetText(report, "TotalValue5", FormatMoneyOrDash(-document.GrandTotal));
+                SetText(report, "WordsValue",  FormatThaiBahtText(-document.GrandTotal));
             }
             else
             {
@@ -912,30 +922,27 @@ internal static class DocumentPdfBuilder
         data.Objects.Add(CreateText("Amount", "[Items.Amount]", 178, 0, 16, 13, 8, align: HorzAlign.Right, valign: VertAlign.Center, border: true));
     }
 
-    private static IEnumerable<PdfItemRow> BuildItemRows(BillingDocument document, bool hasVat)
+    private static IEnumerable<PdfItemRow> BuildItemRows(BillingDocument document, bool hasVat, bool flipSign = false)
     {
         return document.DocumentItems
             .OrderBy(item => item.LineNo ?? int.MaxValue)
             .Select((item, index) =>
             {
-                var description = item.ItemName;
-                if (!string.IsNullOrWhiteSpace(item.ItemRemark))
-                {
-                    description += Environment.NewLine + item.ItemRemark;
-                }
-
+                var qty    = flipSign ? -item.Quantity  : item.Quantity;
+                var amount = flipSign ? -item.Amount    : item.Amount;
+                var vat    = flipSign ? -item.VatAmount : item.VatAmount;
                 return new PdfItemRow(
-                    ContractNo: FormatOrDash(document.SourceNo),
-                    LineNo: (item.LineNo ?? index + 1).ToString(),
-                    Description: description,
-                    DueDate: FormatDateOrDash(document.DueDate ?? document.IssueDate),
-                    Quantity: item.Quantity.ToString("0.00", CultureInfo.InvariantCulture),
-                    UnitPrice: item.UnitPrice.ToString("N2", CultureInfo.InvariantCulture),
-                    Discount: FormatMoneyOrDash(item.DiscountAmount),
-                    Amount: FormatMoneyValue(item.Amount, item.DiscountAmount),
-                    Vat: FormatMoneyOrDash(item.VatAmount),
-                    Total: hasVat ? FormatMoneyOrDash(item.Amount + item.VatAmount) : FormatMoneyValue(item.Amount, item.DiscountAmount),
-                    TotalAmount: FormatMoneyOrDash(item.Amount + item.VatAmount));
+                    ContractNo:  FormatOrDash(document.SourceNo),
+                    LineNo:      (item.LineNo ?? index + 1).ToString(),
+                    Description: item.ItemName,
+                    DueDate:     FormatDateOrDash(document.DueDate ?? document.IssueDate),
+                    Quantity:    qty.ToString("0.00", CultureInfo.InvariantCulture),
+                    UnitPrice:   item.UnitPrice.ToString("N2", CultureInfo.InvariantCulture),
+                    Discount:    FormatMoneyOrDash(item.DiscountAmount),
+                    Amount:      FormatMoneyValue(amount, item.DiscountAmount),
+                    Vat:         FormatMoneyOrDash(vat),
+                    Total:       hasVat ? FormatMoneyOrDash(amount + vat) : FormatMoneyValue(amount, item.DiscountAmount),
+                    TotalAmount: FormatMoneyOrDash(amount + vat));
             })
             .ToList();
     }

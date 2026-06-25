@@ -1,218 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Report ScriptLanguage="CSharp" ReportInfo.Created="06/18/2026 00:00:00" ReportInfo.Modified="06/18/2026 00:00:00" ReportInfo.CreatorVersion="2025.2.0.0">
-  <Dictionary>
-    <BusinessObjectDataSource Name="Items" ReferenceName="Items" DataType="&lt;&gt;f__AnonymousType0`6[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]][], ti-preview, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" Enabled="true">
-      <Column Name="LineNo" DataType="System.String"/>
-      <Column Name="Description" DataType="System.String"/>
-      <Column Name="Quantity" DataType="System.String"/>
-      <Column Name="UnitPrice" DataType="System.String"/>
-      <Column Name="Discount" DataType="System.String"/>
-      <Column Name="Amount" DataType="System.String"/>
-    </BusinessObjectDataSource>
-  </Dictionary>
-  <ReportPage Name="Page1" LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8" Watermark.Font="Arial, 60pt">
-
-    <!-- ============================================================
-         PAGE HEADER: Company header + Customer info box + PO row + Project row + Column headers
-         Total height: 305 units (~80mm)
-         ============================================================ -->
-    <PageHeaderBand Name="PageHeader" Height="305.18">
-
-      <!-- LOGO placeholder (will be replaced by actual logo image at runtime) -->
-      <TextObject Name="HeaderLogo" Left="0" Top="0" Width="83.16" Height="83.16" Border.Lines="All" Text="AMR&#10;ASIA" HorzAlign="Center" VertAlign="Center" Font="TH SarabunPSK, 9pt, style=Bold"/>
-
-      <!-- Company name Thai (bold, large) -->
-      <TextObject Name="HeaderCompany" Left="94.5" Top="0" Width="377.46" Height="26.46" HorzAlign="Left" Font="TH SarabunPSK, 13pt, style=Bold"/>
-
-      <!-- Company EN name + address + tel (multiline, set at runtime) -->
-      <TextObject Name="HeaderCompany2" Left="94.5" Top="26.46" Width="377.46" Height="66.15" HorzAlign="Left" Multiline="true" Font="TH SarabunPSK, 8pt"/>
-
-      <!-- Page number (top-right) -->
-      <TextObject Name="HeaderPage" Left="619.56" Top="0" Width="113.76" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- Document title Thai -->
-      <TextObject Name="HeaderTitleTh" Left="471.96" Top="15.12" Width="261.36" Height="28.35" HorzAlign="Right" Font="TH SarabunPSK, 12pt, style=Bold"/>
-
-      <!-- Document title English -->
-      <TextObject Name="HeaderTitleEn" Left="471.96" Top="43.47" Width="261.36" Height="28.35" HorzAlign="Right" Font="TH SarabunPSK, 12pt, style=Bold"/>
-
-      <!-- ต้นฉบับ/ORIGINAL -->
-      <TextObject Name="HeaderOriginal" Left="471.96" Top="71.82" Width="261.36" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- Horizontal rule below company header -->
-      <LineObject Name="HeaderRule" Top="96.39" Width="733.32" Height="1.51"/>
-
-      <!-- ============================================================
-           CUSTOMER INFO BOX (bordered table, 4 rows × 2 columns)
-           Outer box: top=103, h=109, full width
-           Left column: 0..477 | Right column: 477..733
-           ============================================================ -->
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="CustomerInfoBox" Top="103.95" Width="733.32" Height="108.87"/>
-
-      <!-- Vertical divider between left and right info columns -->
-      <LineObject Name="CustomerInfoDivider" Left="477" Top="103.95" Width="0" Height="108.87"/>
-
-      <!-- Row dividers (horizontal lines within the box) -->
-      <LineObject Name="CustomerRow1Rule" Top="130.68" Width="733.32" Height="0.76"/>
-      <LineObject Name="CustomerRow2Rule" Top="157.4" Width="733.32" Height="0.76"/>
-      <LineObject Name="CustomerRow3Rule" Top="184.14" Width="733.32" Height="0.76"/>
-
-      <!-- LEFT COLUMN: Customer billing info -->
-      <!-- Row 1: ชื่อลูกค้า / Name -->
-      <TextObject Name="BillingLabel" Left="7.56" Top="107.73" Width="113.4" Height="22.68" Text="ชื่อลูกค้า&#10;Name" Font="TH SarabunPSK, 9pt, style=Bold"/>
-      <TextObject Name="BillingName" Left="124.74" Top="110.03" Width="344.52" Height="18.9" Font="TH SarabunPSK, 10pt"/>
-
-      <!-- Row 2: ที่อยู่ / Address -->
-      <TextObject Name="BillingAddressLabel" Left="7.56" Top="134.46" Width="113.4" Height="22.68" Text="ที่อยู่&#10;Address" Font="TH SarabunPSK, 9pt, style=Bold"/>
-      <TextObject Name="BillingAddress" Left="124.74" Top="134.46" Width="344.52" Height="22.68" Multiline="true" Font="TH SarabunPSK, 9pt"/>
-
-      <!-- Row 3: เลขบัตรประชาชน / Tax ID -->
-      <TextObject Name="BillingPostal" Left="7.56" Top="161.18" Width="462.2" Height="22.68" Font="TH SarabunPSK, 9pt"/>
-
-      <!-- Row 4: โทรศัพท์ / Telephone -->
-      <TextObject Name="BillingPhone" Left="7.56" Top="187.92" Width="113.4" Height="22.68" Font="TH SarabunPSK, 9pt, style=Bold"/>
-
-      <!-- RIGHT COLUMN: Document info -->
-      <!-- Row 1: เลขที่เอกสาร / Invoice No. -->
-      <TextObject Name="InfoDocNoLabel" Left="484.56" Top="107.73" Width="100" Height="22.68" Multiline="true" Font="TH SarabunPSK, 9pt, style=Bold"/>
-      <TextObject Name="InfoDocNoValue" Left="586" Top="107.73" Width="140.32" Height="22.68" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
-
-      <!-- Row 2: วันที่ / Date -->
-      <TextObject Name="InfoIssueDateLabel" Left="484.56" Top="134.46" Width="100" Height="22.68" Multiline="true" Font="TH SarabunPSK, 9pt, style=Bold"/>
-      <TextObject Name="InfoIssueDateValue" Left="586" Top="134.46" Width="140.32" Height="22.68" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
-
-      <!-- Row 3: เงื่อนไขการชำระเงิน / Term of Payment -->
-      <TextObject Name="InfoTermLabel" Left="484.56" Top="161.18" Width="100" Height="22.68" Multiline="true" Font="TH SarabunPSK, 9pt, style=Bold"/>
-      <TextObject Name="InfoTermValue" Left="586" Top="161.18" Width="140.32" Height="22.68" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
-
-      <!-- Row 4: อ้างถึงใบแจ้งหนี้เลขที่ / Ref. Invoice No. -->
-      <TextObject Name="InfoRefLabel" Left="484.56" Top="187.92" Width="100" Height="22.68" Multiline="true" Font="TH SarabunPSK, 9pt, style=Bold"/>
-      <TextObject Name="InfoRefValue" Left="586" Top="187.92" Width="140.32" Height="22.68" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
-
-      <!-- ============================================================
-           PO / QUOTATION / SALES ROW
-           3 equal columns, each ~244 units wide
-           ============================================================ -->
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="POBox" Top="220.66" Width="733.32" Height="37.8"/>
-      <LineObject Name="PODivider1" Left="244.44" Top="220.66" Width="0" Height="37.8"/>
-      <LineObject Name="PODivider2" Left="488.88" Top="220.66" Width="0" Height="37.8"/>
-
-      <!-- PO / Contract No. -->
-      <TextObject Name="PurchaseTh" Left="7.56" Top="224.44" Width="229.32" Height="15.12" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="PurchaseEn" Left="7.56" Top="239.56" Width="229.32" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- Quotation No. -->
-      <TextObject Name="QuotationTh" Left="251.97" Top="224.44" Width="229.32" Height="15.12" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="QuotationEn" Left="251.97" Top="239.56" Width="229.32" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- Sales Person -->
-      <TextObject Name="SalesTh" Left="496.44" Top="224.44" Width="229.32" Height="15.12" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="SalesEn" Left="496.44" Top="239.56" Width="229.32" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- ============================================================
-           PROJECT / DEPARTMENT ROW
-           ============================================================ -->
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="ProjectBox" Top="258.46" Width="733.32" Height="28.35"/>
-      <LineObject Name="ProjectDivider" Left="366.66" Top="258.46" Width="0" Height="28.35"/>
-
-      <TextObject Name="ProjectLabel" Left="7.56" Top="262.24" Width="351.54" Height="18.9" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="DepartmentLabel" Left="374.22" Top="262.24" Width="351.54" Height="18.9" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-
-      <!-- ============================================================
-           COLUMN HEADERS FOR ITEMS TABLE
-           Widths: 52.92 / 347.76 / 68.04 / 102.06 / 52.92 / 109.62
-           ============================================================ -->
-      <TextObject Name="Col1" Top="286.81" Width="52.92" Height="18.9" Border.Lines="All" Text="ลำดับที่&#10;Item" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="Col2" Left="52.92" Top="286.81" Width="347.76" Height="18.9" Border.Lines="All" Text="รายการ&#10;Description" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="Col3" Left="400.68" Top="286.81" Width="68.04" Height="18.9" Border.Lines="All" Text="จำนวน&#10;Quantity" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="Col4" Left="468.72" Top="286.81" Width="102.06" Height="18.9" Border.Lines="All" Text="ราคา / หน่วย&#10;Unit Price" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="Col5" Left="570.78" Top="286.81" Width="52.92" Height="18.9" Border.Lines="All" Text="ส่วนลด&#10;Discount" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="Col6" Left="623.7" Top="286.81" Width="109.62" Height="18.9" Border.Lines="All" Text="จำนวนเงิน (บาท)&#10;Amount" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="2026-06-25" ReportInfo.Modified="06/25/2026 14:32:11" ReportInfo.CreatorVersion="2026.2.0.0">
+  <Dictionary/>
+  <ReportPage Name="Page1" RawPaperSize="9" LeftMargin="3" TopMargin="3" RightMargin="3" BottomMargin="3" Guides="56.7" Watermark.Font="Arial, 60pt">
+    <PageHeaderBand Name="PageHeader" Width="771.12" Height="274.05">
+       <TextObject Name="HeaderLogo" Left="319.35" Top="0.55" Width="166.1" Height="84.59" HorzAlign="Center" VertAlign="Center" Font="TH Sarabun New, 11pt, style=Bold"/>
+      <ShapeObject Name="Shape2" Left="408.24" Top="103.95" Width="362.88" Height="170.1" Shape="RoundRectangle" Curve="0.5"/>
+      <ShapeObject Name="Shape1" Top="103.95" Width="406.35" Height="170.1" Shape="RoundRectangle" Curve="0.5"/>
+      <TextObject Name="HeaderCompanyNameTh" Left="7.56" Top="35.91" Width="352" Height="24" Font="TH Sarabun New, 16pt, style=Bold"/>
+      <TextObject Name="HeaderAddrTh" Left="7.56" Top="60.48" Width="460" Height="17" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="HeaderContact" Left="7.56" Top="78" Width="470" Height="17" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="HeaderPage" Left="679" Width="92.12" Height="16" Text="Page 1/1" HorzAlign="Right" Font="TH Sarabun New, 10pt, style=Bold"/>
+      <TextObject Name="HeaderTitleTh" Left="592.85" Top="18" Width="93.22" Height="20.55" Text="ใบกำกับภาษี" HorzAlign="Center" Font="TH Sarabun New, 16pt, style=Bold"/>
+      <TextObject Name="HeaderTitleEn" Left="592.85" Top="40.55" Width="93.22" Height="24" Text="TAX INVOICE" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="HeaderOriginal" Left="611.75" Top="81.1" Width="159.37" Height="16" Text="ต้นฉบับ/ORIGINAL" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="CustNameLabel" Left="7.56" Top="112.1" Width="110" Height="20" Text="ชื่อลูกค้า" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="CustNameLabelEn" Left="7.56" Top="126.25" Width="110" Height="16" Text="Name" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="CustName" Left="120" Top="114.1" Width="266.1" Height="34" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="CustAddrLabel" Left="7.56" Top="154.1" Width="110" Height="20" Text="ที่อยู่" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="CustAddrLabelEn" Left="7.56" Top="170.1" Width="110" Height="16" Text="Address" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="CustAddress" Left="120" Top="154.1" Width="261.95" Height="36" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="CustIdLabel" Left="7.56" Top="205.1" Width="116.1" Height="20" Text="เลขบัตรประชาชน :" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="CustTaxId" Left="126.1" Top="205.1" Width="264.3" Height="20" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="CustPhoneLabel" Left="7.56" Top="238.1" Width="110" Height="20" Text="โทรศัพท์" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="CustPhoneLabelEn" Left="7.56" Top="251.37" Width="110" Height="16" Text="Telephone" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="CustPhone" Left="120" Top="238.1" Width="271.4" Height="32" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="InfoDocNoLabel" Left="415.41" Top="112.1" Width="84.4" Height="20" Text="เลขที่เอกสาร" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="InfoDocNoLabelEn" Left="415.41" Top="126.25" Width="84.4" Height="16" Text="Invoice No." Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="InfoDocNoValue" Left="552.75" Top="112.1" Width="211.37" Height="32" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="InfoDateLabel" Left="415.41" Top="154.1" Width="84.4" Height="20" Text="วันที่" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="InfoDateLabelEn" Left="415.41" Top="170.1" Width="84.4" Height="16" Text="Date" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="InfoDateValue" Left="552.75" Top="154.1" Width="211.37" Height="32" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="InfoTermLabel" Left="415.41" Top="196.1" Width="103.3" Height="20" Text="เงื่อนไขการชำระเงิน" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="InfoTermLabelEn" Left="415.41" Top="209.79" Width="103.3" Height="16" Text="Term of Payment" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="InfoTermValue" Left="552.75" Top="196.1" Width="211.37" Height="32" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="InfoRefLabel" Left="415.41" Top="238.1" Width="131.65" Height="20" Text="อ้างถึงใบแจ้งหนี้เลขที่" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="InfoRefLabelEn" Left="415.41" Top="251.37" Width="131.65" Height="16" Text="Ref. Invoice No." Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="InfoRefValue" Left="552.75" Top="238.1" Width="211.37" Height="32" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
     </PageHeaderBand>
-
-    <!-- ============================================================
-         DATA BAND: One row per line item
-         ============================================================ -->
-    <DataBand Name="TaxInvoiceItems" Height="18.9" DataSource="Items">
-      <TextObject Name="ItemNo" Width="52.92" Height="18.9" Border.Lines="All" Text="[Items.LineNo]" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="ItemDesc" Left="52.92" Width="347.76" Height="18.9" Border.Lines="All" Text="[Items.Description]" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="ItemQty" Left="400.68" Width="68.04" Height="18.9" Border.Lines="All" Text="[Items.Quantity]" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="ItemUnit" Left="468.72" Width="102.06" Height="18.9" Border.Lines="All" Text="[Items.UnitPrice]" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="ItemDiscount" Left="570.78" Width="52.92" Height="18.9" Border.Lines="All" Text="[Items.Discount]" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="ItemAmount" Left="623.7" Width="109.62" Height="18.9" Border.Lines="All" Text="[Items.Amount]" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+    <DataBand Name="Items" Top="276.99" Width="771.12" Height="642.6" CanGrow="true">
+      <ShapeObject Name="Shape4" Top="35.91" Width="771.12" Height="463.05" Shape="RoundRectangle" Curve="0.5"/>
+      <ShapeObject Name="Shape3" Top="3.78" Width="771.12" Height="41.58" Fill="LinearGradient" Fill.StartColor="WhiteSmoke" Fill.EndColor="White" Fill.Angle="0" Fill.Focus="1" Fill.Contrast="1" Shape="RoundRectangle" Curve="0.5"/>
+      <TextObject Name="Col2En" Left="56.7" Top="22.68" Width="347.76" Height="15" Text="Description" HorzAlign="Center" Font="TH Sarabun New, 12pt"/>
+      <LineObject Name="ColHdrDiv1" Left="56.7" Top="3.78" Height="487.62"/>
+      <LineObject Name="ColHdrDiv2" Left="404.46" Top="3.78" Height="487.62"/>
+      <LineObject Name="ColHdrDiv3" Left="472.5" Top="3.78" Height="487.62"/>
+      <LineObject Name="ColHdrDiv4" Left="574.56" Top="3.78" Height="487.62"/>
+      <TextObject Name="Col1" Left="3.78" Top="7.56" Width="52.92" Height="18" Text="ลำดับที่" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="Col1En" Left="3.78" Top="22.68" Width="52.92" Height="15" Text="Item" HorzAlign="Center" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="Col2" Left="56.7" Top="7.56" Width="347.76" Height="18" Text="รายการ" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="Col3" Left="404.46" Top="7.56" Width="68.04" Height="18" Text="จำนวน" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="Col3En" Left="404.46" Top="22.68" Width="68.04" Height="15" Text="Quantity" HorzAlign="Center" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="Col4" Left="472.5" Top="7.56" Width="102.06" Height="18" Text="ราคา / หน่วย" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="Col4En" Left="472.5" Top="22.68" Width="102.06" Height="15" Text="Unit Price" HorzAlign="Center" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="Col5" Left="574.56" Top="7.56" Width="62.37" Height="18" Text="ส่วนลด" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="Col5En" Left="574.56" Top="22.68" Width="62.37" Height="15" Text="Discount" HorzAlign="Center" Font="TH Sarabun New, 12pt"/>
+      <TextObject Name="Col6" Left="646.38" Top="7.56" Width="109.62" Height="18" Text="จำนวนเงิน (บาท)" HorzAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="Col6En" Left="646.38" Top="22.68" Width="109.62" Height="15" Text="Amount" HorzAlign="Center" Font="TH Sarabun New, 12pt"/>
+      <ShapeObject Name="Shape5" Top="444.15" Width="771.12" Height="198.45" Fill="LinearGradient" Fill.StartColor="White" Fill.EndColor="White" Fill.Angle="0" Fill.Focus="1" Fill.Contrast="1" Shape="RoundRectangle" Curve="0.5"/>
+      <TextObject Name="RemarkLabel" Left="7.56" Top="448.15" Width="70" Height="18" Text="หมายเหตุ" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="RemarkValue" Left="82" Top="448.15" Width="375" Height="120.55" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalLabelTh1" Left="479.45" Top="447.15" Width="100" Height="27" Text="รวมราคา" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="TotalLabelEn1" Left="561.55" Top="447.15" Width="72.55" Height="27" Text="Amount" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalValue1" Left="638.1" Top="447.15" Width="125.7" Height="27" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalLabelEn2" Left="561.55" Top="478.17" Width="72.55" Height="27" Text="Discount" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalLabelTh2" Left="479.45" Top="478.17" Width="100" Height="27" Text="ส่วนลด" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="TotalValue2" Left="638.1" Top="478.17" Width="125.7" Height="27" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalLabelTh3" Left="479.45" Top="510.3" Width="100" Height="27" Text="มูลค่าสินค้า" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="TotalLabelEn3" Left="561.55" Top="510.3" Width="72.55" Height="27" Text="Net Amount" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalValue3" Left="638.1" Top="510.3" Width="125.7" Height="27" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalLabelTh4" Left="479.45" Top="542.43" Width="100" Height="27" Text="ภาษีมูลค่าเพิ่ม" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="TotalLabelEn4" Left="561.55" Top="542.43" Width="72.55" Height="27" Text="VAT 7.00%" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalValue4" Left="638.1" Top="542.43" Width="125.7" Height="27" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="TotalLabelTh5" Left="479.45" Top="576.45" Width="100" Height="27" Text="ยอดเงินสุทธิ" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="TotalLabelEn5" Left="561.55" Top="576.45" Width="72.55" Height="27" Text="Net Amount" VertAlign="Center" WordWrap="false" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <TextObject Name="TotalValue5" Left="638.1" Top="576.45" Width="125.7" Height="27" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt, style=Bold"/>
+      <LineObject Name="Line4" Top="608.58" Width="771.12" Diagonal="true"/>
+      <LineObject Name="Line5" Left="463.05" Top="444.15" Height="164.43" Diagonal="true"/>
+      <LineObject Name="Line6" Left="463.05" Top="476.28" Width="306.18" Diagonal="true"/>
+      <LineObject Name="Line7" Left="463.05" Top="506.52" Width="306.18" Diagonal="true"/>
+      <LineObject Name="Line8" Left="463.05" Top="538.65" Width="306.18" Diagonal="true"/>
+      <LineObject Name="Line9" Left="463.05" Top="572.67" Width="306.18" Diagonal="true"/>
+      <TextObject Name="WordsLabel" Left="7.56" Top="612.05" Width="108.85" Height="22" Text="จำนวนเงิน (ตัวอักษร)" VertAlign="Center" Font="TH Sarabun New, 11pt, style=Bold"/>
+      <TextObject Name="WordsValue" Left="121.85" Top="612.05" Width="641.95" Height="22" VertAlign="Center" Font="TH Sarabun New, 11pt, style=Bold"/>
+      <LineObject Name="ColHdrDiv5" Left="636.93" Top="3.78" Height="636.93"/>
+      <TextObject Name="ItemNo" Left="1.89" Top="47.25" Width="52.92" Height="25" Text="[Items.LineNo]" HorzAlign="Center" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="ItemDesc" Left="58.59" Top="47.25" Width="343.98" Height="25" Text="[Items.Description]" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="ItemQty" Left="406.35" Top="47.25" Width="64.26" Height="25" Text="[Items.Quantity]" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="ItemUnit" Left="474.39" Top="47.25" Width="98.28" Height="25" Text="[Items.UnitPrice]" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="ItemDiscount" Left="576.45" Top="47.25" Width="56.7" Height="25" Text="[Items.Discount]" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
+      <TextObject Name="ItemAmount" Left="638.82" Top="47.25" Width="128.52" Height="25" Text="[Items.Total]" HorzAlign="Right" VertAlign="Center" Font="TH Sarabun New, 14pt"/>
     </DataBand>
-
-    <!-- ============================================================
-         REPORT SUMMARY (pinned to bottom of page)
-         Total height: 265 units (~70mm)
-         ============================================================ -->
-    <ReportSummaryBand Name="ReportSummary" Height="265.54" PrintOnBottom="true">
-
-      <!-- REMARK BOX (left, 65% width) + TOTALS BOX (right, 35% width) -->
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="RemarkBox" Top="0" Width="477" Height="106.92"/>
-      <TextObject Name="RemarkLabel" Left="7.56" Top="3.78" Width="56.7" Height="15.12" Text="หมายเหตุ" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="RemarkValue" Left="67.68" Top="3.78" Width="401.58" Height="94.5" Multiline="true" Font="TH SarabunPSK, 8.5pt"/>
-
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="TotalsBox" Left="477" Top="0" Width="256.32" Height="106.92"/>
-
-      <!-- รวมราคา Amount -->
-      <TextObject Name="TotalLabel1" Left="484.56" Top="7.56" Width="140" Height="18.9" HorzAlign="Left" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="TotalValue1" Left="624.56" Top="7.56" Width="100.76" Height="18.9" HorzAlign="Right" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- ส่วนลด Discount -->
-      <TextObject Name="TotalLabel2" Left="484.56" Top="28.35" Width="140" Height="18.9" HorzAlign="Left" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="TotalValue2" Left="624.56" Top="28.35" Width="100.76" Height="18.9" HorzAlign="Right" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- มูลค่าสินค้า Net Amount -->
-      <TextObject Name="TotalLabel3" Left="484.56" Top="49.14" Width="140" Height="18.9" HorzAlign="Left" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="TotalValue3" Left="624.56" Top="49.14" Width="100.76" Height="18.9" HorzAlign="Right" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- ภาษีมูลค่าเพิ่ม VAT -->
-      <TextObject Name="TotalLabel4" Left="484.56" Top="69.93" Width="140" Height="18.9" HorzAlign="Left" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="TotalValue4" Left="624.56" Top="69.93" Width="100.76" Height="18.9" HorzAlign="Right" VertAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- ยอดเงินสุทธิ Net Amount -->
-      <TextObject Name="TotalLabel5" Left="484.56" Top="90.72" Width="140" Height="15.12" HorzAlign="Left" VertAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="TotalValue5" Left="624.56" Top="90.72" Width="100.76" Height="15.12" HorzAlign="Right" VertAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-
-      <!-- AMOUNT IN WORDS BOX -->
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="WordsBox" Top="113.4" Width="733.32" Height="28.35"/>
-      <TextObject Name="WordsLabel" Left="7.56" Top="117.18" Width="151.2" Height="18.9" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
-      <TextObject Name="WordsValue" Left="162.18" Top="117.18" Width="563.7" Height="18.9" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- NARRATIVE -->
-      <TextObject Name="NarrativeTh" Top="148.18" Width="396" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="NarrativeFor" Left="403.56" Top="148.18" Width="52.92" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="NarrativeCompany" Left="462" Top="148.18" Width="271.32" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-
-      <TextObject Name="NarrativeEn" Top="163.3" Width="396" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="NarrativeForEn" Left="403.56" Top="163.3" Width="52.92" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="NarrativeCompanyEn" Left="462" Top="163.3" Width="271.32" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- SIGNATURE BOXES (3 equal columns) -->
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="SignBox1" Top="181.44" Width="234.36" Height="52.92"/>
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="SignBox2" Left="249.48" Top="181.44" Width="234.36" Height="52.92"/>
-      <ShapeObject ShapeType="RoundRectangle" Curve="4" Name="SignBox3" Left="498.96" Top="181.44" Width="234.36" Height="52.92"/>
-
-      <!-- Signature lines -->
-      <LineObject Name="SignLine1" Left="15.12" Top="207.18" Width="204.12" Height="1.51" Style="Dash"/>
-      <LineObject Name="SignLine2" Left="264.6" Top="207.18" Width="204.12" Height="1.51" Style="Dash"/>
-      <LineObject Name="SignLine3" Left="514.08" Top="207.18" Width="204.12" Height="1.51" Style="Dash"/>
-
-      <!-- Signature captions -->
-      <TextObject Name="SignCap1" Left="15.12" Top="211.68" Width="204.12" Height="18.9" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="SignCap2" Left="264.6" Top="211.68" Width="204.12" Height="18.9" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="SignCap3" Left="514.08" Top="211.68" Width="204.12" Height="18.9" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- Date lines -->
-      <TextObject Name="SignDate1" Left="15.12" Top="232.47" Width="204.12" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="SignDate2" Left="264.6" Top="232.47" Width="204.12" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-      <TextObject Name="SignDate3" Left="514.08" Top="232.47" Width="204.12" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
-
-      <!-- FOOTER REMARKS -->
-      <TextObject Name="FooterTh" Top="242.06" Width="733.32" Height="13.23" Font="TH SarabunPSK, 8pt"/>
-      <TextObject Name="FooterEn" Top="255.29" Width="733.32" Height="13.23" Font="TH SarabunPSK, 8pt"/>
+    <ReportSummaryBand Name="ReportSummary" Top="922.53" Width="771.12" Height="141.75" PrintOnBottom="true">
+      <TextObject Name="NarrativeTh" Top="2.45" Width="392" Height="16" Text="ข้าพเจ้าได้รับสินค้าตามรายการข้างต้นโดยถูกต้องและเรียบร้อย" Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="NarrativeForLabel" Left="399" Top="2.45" Width="44" Height="16" Text="ในนาม :" Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="NarrativeForValue" Left="445" Top="2.45" Width="288" Height="16" Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="NarrativeEn" Top="19.45" Width="392" Height="16" Text="Received the above mentioned goods order and condition." Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="NarrativeForLabelEn" Left="399" Top="19.45" Width="44" Height="16" Text="For :" Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="NarrativeForValueEn" Left="445" Top="19.45" Width="288" Height="16" Font="TH Sarabun New, 11pt"/>
+      <LineObject Name="SignLine1" Left="233" Top="87.35" Width="-195.2" Border.Style="Dash"/>
+      <LineObject Name="SignLine2" Left="495.9" Top="87.35" Width="-197.32" Border.Style="Dash"/>
+      <LineObject Name="SignLine3" Left="758.8" Top="87.35" Width="-182.2" Border.Style="Dash"/>
+      <TextObject Name="SignCap1" Left="12" Top="75.6" Width="44.7" Height="18" Text="ผู้รับ" Font="TH Sarabun New, 11pt, style=Bold"/>
+      <TextObject Name="SignCap1En" Left="12" Top="89.45" Width="44.7" Height="16" Text="Receiver" HorzAlign="Center" Font="TH Sarabun New, 9pt"/>
+      <TextObject Name="SignCap2" Left="275.9" Top="75.6" Width="31" Height="18" Text="ผู้ส่ง" Font="TH Sarabun New, 11pt, style=Bold"/>
+      <TextObject Name="SignCap2En" Left="275.9" Top="89.45" Width="40.45" Height="16" Text="Delivery" Font="TH Sarabun New, 9pt"/>
+      <TextObject Name="SignCap3" Left="538.8" Top="75.6" Width="40.45" Height="18" Text="ผู้อนุมัติ" Font="TH Sarabun New, 11pt, style=Bold"/>
+      <TextObject Name="SignCap3En" Left="538.8" Top="89.45" Width="220" Height="16" Text="Authorized Signature" Font="TH Sarabun New, 9pt"/>
+      <TextObject Name="SignDate1" Left="12" Top="105.45" Width="70.5" Height="16" Text="วันที่ / Date" Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="SignDate2" Left="275.9" Top="105.45" Width="59.35" Height="16" Text="วันที่ / Date" Font="TH Sarabun New, 11pt"/>
+      <TextObject Name="SignDate3" Left="538.8" Top="105.45" Width="59.35" Height="16" Text="วันที่ / Date" Font="TH Sarabun New, 11pt"/>
+      <LineObject Name="Line1" Left="66.15" Top="119.07" Width="166.85" Border.Style="Dash"/>
+      <LineObject Name="Line2" Left="330.75" Top="119.07" Width="166.85" Border.Style="Dash"/>
+      <LineObject Name="Line3" Left="595.35" Top="119.07" Width="166.85" Border.Style="Dash"/>
+      <ShapeObject Name="Shape6" Top="37.8" Width="255.15" Height="103.95" Shape="RoundRectangle" Curve="0.5"/>
+      <ShapeObject Name="Shape7" Left="258.93" Top="37.8" Width="255.15" Height="103.95" Shape="RoundRectangle" Curve="0.5"/>
+      <ShapeObject Name="Shape8" Left="515.97" Top="37.8" Width="255.15" Height="103.95" Shape="RoundRectangle" Curve="0.5"/>
     </ReportSummaryBand>
-
   </ReportPage>
 </Report>
