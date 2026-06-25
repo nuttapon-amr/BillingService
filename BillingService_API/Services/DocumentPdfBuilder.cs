@@ -105,7 +105,7 @@ internal static class DocumentPdfBuilder
         bool logoAvailable,
         bool hasVat)
     {
-        var templatePath = ResolveTemplatePath(documentType);
+        var templatePath = ResolveTemplatePath(documentType, hasVat);
         if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
         {
             return null;
@@ -129,7 +129,7 @@ internal static class DocumentPdfBuilder
             }
             else if (documentType == "RC")
             {
-                BindRcTemplate(report, document, companyName, template, logoPath, logoAvailable, hasVat);
+                BindRcTemplate(report, document, companyName, template, logoPath, logoAvailable, hasVat, itemRows);
             }
             else
             {
@@ -143,12 +143,12 @@ internal static class DocumentPdfBuilder
         }
     }
 
-    private static string? ResolveTemplatePath(string documentType)
+    private static string? ResolveTemplatePath(string documentType, bool hasVat = false)
     {
         var fileName = documentType switch
         {
             "TI" => "TI.frx",
-            "RC" => "RC.frx",
+            "RC" => hasVat ? "RC.frx" : "RC_NOVAT.frx",
             "CN" => "CN.frx",
             _ => null
         };
@@ -250,11 +250,88 @@ internal static class DocumentPdfBuilder
         DocumentTemplate template,
         string? logoPath,
         bool logoAvailable,
-        bool hasVat)
+        bool hasVat,
+        IEnumerable<PdfItemRow> itemRows)
     {
-        // RC template renders from static content in RC.frx.
-        // Data binding will be wired up once object names are finalized.
+        // Company letterhead
+        SetText(report, "HeaderCompanyNameTh", FormatOrDash(companyName));
+        SetText(report, "HeaderAddrTh", FormatOrDash(document.CompanyAddressSnapshot));
+        SetText(report, "HeaderContact", $"เลขประจำตัวผู้เสียภาษี / Tax ID {FormatOrDash(document.CompanyTaxIdSnapshot)}  สาขา / Branch {FormatOrDash(document.CompanyBranchNoSnapshot)}");
+
+        // Customer info
+        SetText(report, "CustName", FormatOrDash(document.CustomerNameSnapshot));
+        SetText(report, "CustAddress", FormatOrDash(document.CustomerAddressSnapshot));
+        SetText(report, "CustTaxId", FormatOrDash(document.CustomerTaxIdSnapshot));
+        SetText(report, "CustPhone", FormatOrDash(document.CustomerPhoneSnapshot));
+
+        // Document info
+        SetText(report, "InfoDocNoValue", FormatOrDash(document.DocumentNo));
+        SetText(report, "InfoDateValue", FormatDateOrDash(document.IssueDate));
+        SetText(report, "InfoTermValue", "0 วัน");
+        SetText(report, "InfoRefValue", FormatOrDash(document.ReferenceDocumentNoSnapshot));
+
+        // Totals
+        var discount = document.DocumentItems.Sum(item => item.DiscountAmount ?? 0m);
+        SetText(report, "TotalValue1", FormatMoneyOrDash(document.SubTotal));
+        SetText(report, "TotalValue2", FormatMoneyOrDash(discount));
+        SetText(report, "TotalValue3", FormatMoneyOrDash(document.SubTotal - discount));
+        SetText(report, "TotalValue4", FormatMoneyOrDash(document.VatAmount));
+        SetText(report, "TotalValue5", FormatMoneyOrDash(document.GrandTotal));
+
+        // Words & remark
+        SetText(report, "WordsValue", FormatThaiBahtText(document.GrandTotal));
+        SetText(report, "RemarkValue", FormatOrDash(document.Remark));
+
+        // Narrative
+        SetText(report, "NarrativeForValue", FormatOrDash(GetPrimaryHeaderLine(template, companyName)));
+        SetText(report, "NarrativeForValueEn", FormatOrDash(document.CompanyNameSnapshot));
+
         AddTemplateLogo(report, logoPath, logoAvailable);
+        BindRcItemRows(report, itemRows.ToList());
+    }
+
+    private static void BindRcItemRows(Report report, IReadOnlyList<PdfItemRow> items)
+    {
+        if (items.Count == 0) return;
+
+        SetText(report, "ItemNo", items[0].LineNo);
+        SetText(report, "ItemDesc", items[0].Description);
+        SetText(report, "ItemQty", items[0].Quantity);
+        SetText(report, "ItemUnit", items[0].UnitPrice);
+        SetText(report, "ItemDiscount", items[0].Discount);
+        SetText(report, "ItemAmount", items[0].Total);
+
+        if (items.Count == 1) return;
+
+        if (report.FindObject("Items") is not DataBand dataBand) return;
+
+        string[] cellNames = { "ItemNo", "ItemDesc", "ItemQty", "ItemUnit", "ItemDiscount", "ItemAmount" };
+
+        for (int i = 1; i < items.Count; i++)
+        {
+            var row = items[i];
+            string[] values = { row.LineNo, row.Description, row.Quantity, row.UnitPrice, row.Discount, row.Total };
+
+            for (int c = 0; c < cellNames.Length; c++)
+            {
+                if (report.FindObject(cellNames[c]) is not TextObject src) continue;
+                var cell = new TextObject
+                {
+                    Name = $"{cellNames[c]}_{i}",
+                    Left = src.Left,
+                    Top = src.Top + (i * src.Height),
+                    Width = src.Width,
+                    Height = src.Height,
+                    Text = values[c],
+                    HorzAlign = src.HorzAlign,
+                    VertAlign = src.VertAlign,
+                    Font = src.Font,
+                    WordWrap = src.WordWrap
+                };
+                cell.Border.Lines = src.Border.Lines;
+                dataBand.Objects.Add(cell);
+            }
+        }
     }
 
     private static void BindTaxInvoiceTemplate(
