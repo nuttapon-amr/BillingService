@@ -24,6 +24,9 @@ public class CreateReceiptRequest
 
     public string? Remark { get; set; }
 
+    [MaxLength(50)]
+    public string? PaymentMethodSnapshot { get; set; }
+
     [Required]
     [MinLength(1)]
     public List<CreateReceiptItemRequest> Items { get; set; } = new();
@@ -31,8 +34,13 @@ public class CreateReceiptRequest
 
 public class CreateReceiptItemRequest
 {
+    public int? LineNo { get; set; }
+
     [MaxLength(50)]
     public string? ItemCode { get; set; }
+
+    [MaxLength(50)]
+    public string? UnitName { get; set; }
 
     [Required]
     [MaxLength(255)]
@@ -46,4 +54,10 @@ public class CreateReceiptItemRequest
 
     [Range(0, 100)]
     public decimal VatRate { get; set; }
+
+    [Range(0, double.MaxValue)]
+    public decimal? DiscountAmount { get; set; }
+
+    [MaxLength(255)]
+    public string? ItemRemark { get; set; }
 }

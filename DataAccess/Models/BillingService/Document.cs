@@ -39,6 +39,16 @@ public partial class Document
     public string? CompanyAddressSnapshot { get; set; }
 
     /// <summary>
+    /// อีเมลบริษัท ณ วันที่ออกเอกสาร
+    /// </summary>
+    public string? CompanyEmailSnapshot { get; set; }
+
+    /// <summary>
+    /// เบอร์โทรบริษัท ณ วันที่ออกเอกสาร
+    /// </summary>
+    public string? CompanyPhoneSnapshot { get; set; }
+
+    /// <summary>
     /// ลูกค้าผู้รับเอกสาร
     /// </summary>
     public Guid? CustomerId { get; set; }
@@ -74,6 +84,21 @@ public partial class Document
     public string? CustomerPostalCodeSnapshot { get; set; }
 
     /// <summary>
+    /// อีเมลลูกค้า ณ วันที่ออกเอกสาร
+    /// </summary>
+    public string? CustomerEmailSnapshot { get; set; }
+
+    /// <summary>
+    /// เบอร์โทรลูกค้า ณ วันที่ออกเอกสาร
+    /// </summary>
+    public string? CustomerPhoneSnapshot { get; set; }
+
+    /// <summary>
+    /// วิธีชำระเงิน ณ วันที่ออกเอกสาร
+    /// </summary>
+    public string? PaymentMethodSnapshot { get; set; }
+
+    /// <summary>
     /// ประเภทข้อมูลต้นทาง เช่น ChargingTransaction, Subscription
     /// </summary>
     public string SourceType { get; set; } = null!;
@@ -94,39 +119,19 @@ public partial class Document
     public Guid? ReferenceDocumentId { get; set; }
 
     /// <summary>
-    /// เลขเอกสารต้นฉบับสำหรับใบลดหนี้
+    /// เลขเอกสารอ้างอิงแบบ snapshot สำหรับแสดงใน PDF
     /// </summary>
-    public string? OriginalDocumentNoSnapshot { get; set; }
+    public string? ReferenceDocumentNoSnapshot { get; set; }
 
     /// <summary>
-    /// วันที่ออกเอกสารต้นฉบับ
+    /// วันที่เอกสารอ้างอิงแบบ snapshot
     /// </summary>
-    public DateTime? OriginalIssueDateSnapshot { get; set; }
+    public DateTime? ReferenceIssueDateSnapshot { get; set; }
 
     /// <summary>
-    /// ประเภทเอกสารต้นฉบับ
+    /// ประเภทเอกสารอ้างอิงแบบ snapshot
     /// </summary>
-    public string? OriginalDocumentTypeSnapshot { get; set; }
-
-    /// <summary>
-    /// ยอดก่อนภาษีของเอกสารต้นฉบับ
-    /// </summary>
-    public decimal? OriginalSubTotalSnapshot { get; set; }
-
-    /// <summary>
-    /// ยอดภาษีมูลค่าเพิ่มของเอกสารต้นฉบับ
-    /// </summary>
-    public decimal? OriginalVatAmountSnapshot { get; set; }
-
-    /// <summary>
-    /// ยอดรวมสุทธิของเอกสารต้นฉบับ
-    /// </summary>
-    public decimal? OriginalGrandTotalSnapshot { get; set; }
-
-    /// <summary>
-    /// เหตุผลการออกใบลดหนี้
-    /// </summary>
-    public string? CreditNoteReasonSnapshot { get; set; }
+    public string? ReferenceDocumentTypeSnapshot { get; set; }
 
     /// <summary>
     /// ประเภทเอกสาร RC=ใบเสร็จ, TI=ใบกำกับภาษี, CN=ใบลดหนี้, DN=ใบเพิ่มหนี้
@@ -197,6 +202,41 @@ public partial class Document
     /// ออกใบกำกับภาษีแล้วหรือยัง
     /// </summary>
     public bool TaxInvoiceIssued { get; set; }
+
+    /// <summary>
+    /// เลขเอกสารต้นฉบับสำหรับใบลดหนี้
+    /// </summary>
+    public string? OriginalDocumentNoSnapshot { get; set; }
+
+    /// <summary>
+    /// วันที่ออกเอกสารต้นฉบับ
+    /// </summary>
+    public DateTime? OriginalIssueDateSnapshot { get; set; }
+
+    /// <summary>
+    /// ประเภทเอกสารต้นฉบับ
+    /// </summary>
+    public string? OriginalDocumentTypeSnapshot { get; set; }
+
+    /// <summary>
+    /// ยอดก่อนภาษีของเอกสารต้นฉบับ
+    /// </summary>
+    public decimal? OriginalSubTotalSnapshot { get; set; }
+
+    /// <summary>
+    /// ยอด VAT ของเอกสารต้นฉบับ
+    /// </summary>
+    public decimal? OriginalVatAmountSnapshot { get; set; }
+
+    /// <summary>
+    /// ยอดรวมสุทธิของเอกสารต้นฉบับ
+    /// </summary>
+    public decimal? OriginalGrandTotalSnapshot { get; set; }
+
+    /// <summary>
+    /// เหตุผลการออกใบลดหนี้
+    /// </summary>
+    public string? CreditNoteReasonSnapshot { get; set; }
 
     public virtual Company Company { get; set; } = null!;
 

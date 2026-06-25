@@ -15,7 +15,10 @@
       "launchUrl": "swagger",
       "applicationUrl": "http://localhost:5293",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DYLD_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib",
+        "DYLD_FALLBACK_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib",
+        "LD_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib"
       },
       "dotnetRunMessages": true
     },
@@ -25,7 +28,10 @@
       "launchUrl": "swagger",
       "applicationUrl": "https://localhost:7230;http://localhost:5293",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DYLD_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib",
+        "DYLD_FALLBACK_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib",
+        "LD_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib"
       },
       "dotnetRunMessages": true
     },
@@ -34,7 +40,10 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DYLD_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib",
+        "DYLD_FALLBACK_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib",
+        "LD_LIBRARY_PATH": "/opt/homebrew/lib:/usr/local/lib"
       }
     }
   }

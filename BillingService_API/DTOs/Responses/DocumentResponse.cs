@@ -9,12 +9,17 @@ public class DocumentResponse
     public string? CompanyTaxIdSnapshot { get; set; }
     public string? CompanyBranchNoSnapshot { get; set; }
     public string? CompanyAddressSnapshot { get; set; }
+    public string? CompanyEmailSnapshot { get; set; }
+    public string? CompanyPhoneSnapshot { get; set; }
     public string? CustomerNameSnapshot { get; set; }
     public string? CustomerTypeSnapshot { get; set; }
     public string? CustomerTaxIdSnapshot { get; set; }
     public string? CustomerBranchNoSnapshot { get; set; }
     public string? CustomerAddressSnapshot { get; set; }
     public string? CustomerPostalCodeSnapshot { get; set; }
+    public string? CustomerEmailSnapshot { get; set; }
+    public string? CustomerPhoneSnapshot { get; set; }
+    public string? PaymentMethodSnapshot { get; set; }
     public string SourceType { get; set; } = string.Empty;
     public Guid SourceId { get; set; }
     public string? SourceNo { get; set; }
@@ -30,6 +35,9 @@ public class DocumentResponse
     public decimal GrandTotal { get; set; }
     public string? Remark { get; set; }
     public Guid? ReferenceDocumentId { get; set; }
+    public string? ReferenceDocumentNoSnapshot { get; set; }
+    public DateTime? ReferenceIssueDateSnapshot { get; set; }
+    public string? ReferenceDocumentTypeSnapshot { get; set; }
     public string? OriginalDocumentNoSnapshot { get; set; }
     public DateTime? OriginalIssueDateSnapshot { get; set; }
     public string? OriginalDocumentTypeSnapshot { get; set; }

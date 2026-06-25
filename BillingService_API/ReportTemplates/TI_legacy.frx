@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="06/14/2026 22:02:09" ReportInfo.Modified="06/14/2026 22:02:09" ReportInfo.CreatorVersion="2025.2.0.0">
+  <Dictionary>
+    <BusinessObjectDataSource Name="Items" ReferenceName="Items" DataType="&lt;&gt;f__AnonymousType0`6[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]][], ti-preview, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" Enabled="true">
+      <Column Name="LineNo" DataType="System.String"/>
+      <Column Name="Description" DataType="System.String"/>
+      <Column Name="Quantity" DataType="System.String"/>
+      <Column Name="UnitPrice" DataType="System.String"/>
+      <Column Name="Discount" DataType="System.String"/>
+      <Column Name="Amount" DataType="System.String"/>
+    </BusinessObjectDataSource>
+  </Dictionary>
+  <ReportPage Name="Page1" LeftMargin="8" TopMargin="8" RightMargin="8" BottomMargin="8" Watermark.Font="Arial, 60pt">
+    <ReportTitleBand Name="ReportTitle" Height="143.64">
+      <TextObject Name="TiBillingLabel" Width="491.4" Height="15.12" Text="ที่อยู่ผู้รับเอกสาร | Address of Billing" Font="TH SarabunPSK, 9.5pt, style=Bold"/>
+      <TextObject Name="TiBillingName" Top="15.12" Width="491.4" Height="15.12" Font="TH SarabunPSK, 9.5pt"/>
+      <TextObject Name="TiBillingAddress" Top="30.24" Width="491.4" Height="15.12" Font="TH SarabunPSK, 9.5pt"/>
+      <TextObject Name="TiBillingPostal" Top="45.36" Width="491.4" Height="15.12" Font="TH SarabunPSK, 9.5pt"/>
+      <TextObject Name="TiBillingPhone" Top="60.48" Width="491.4" Height="15.12" Font="TH SarabunPSK, 9.5pt"/>
+      <TextObject Name="TiBillingTaxInvoiceLabel" Top="79.38" Width="491.4" Height="15.12" Text="ชื่อผู้รับใบกำกับภาษี | Tax Invoice issued for" Font="TH SarabunPSK, 9.5pt, style=Bold"/>
+      <TextObject Name="TiBillingTaxInvoiceName" Top="94.5" Width="491.4" Height="15.12" Font="TH SarabunPSK, 9.5pt"/>
+      <TextObject Name="TiBillingTaxInvoiceAddress" Top="109.62" Width="491.4" Height="15.12" Font="TH SarabunPSK, 9.5pt"/>
+      <LineObject Name="TiTopRule" Top="132.3" Width="733.32" Height="1.51"/>
+    </ReportTitleBand>
+    <PageHeaderBand Name="PageHeader" Height="250.56">
+      <TextObject Name="TiLogoFallback" Left="37.8" Top="7.56" Width="75.6" Height="60.48" Border.Lines="All" Text="AMR&#10;ASIA" HorzAlign="Center" Font="TH SarabunPSK, 8pt, style=Bold"/>
+      <TextObject Name="TiCompanyThai" Width="453.6" Height="18.9" Font="TH SarabunPSK, 11pt, style=Bold"/>
+      <TextObject Name="TiCompanyName" Top="18.9" Width="453.6" Height="18.9" Font="TH SarabunPSK, 10pt"/>
+      <TextObject Name="TiCompanyLine1" Top="37.8" Width="585.9" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiCompanyLine2" Top="52.92" Width="585.9" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiCompanyLine3" Top="68.04" Width="585.9" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiPage" Left="662.76" Width="70.56" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiHandwrittenNo" Left="523.8" Width="209.52" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 10pt"/>
+      <TextObject Name="TiTitleTh" Left="523.8" Top="30.24" Width="209.52" Height="26.46" Text="ใบกำกับภาษี" HorzAlign="Right" Font="TH SarabunPSK, 12pt"/>
+      <TextObject Name="TiTitleEn" Left="523.8" Top="56.7" Width="209.52" Height="26.46" Text="TAX INVOICE" HorzAlign="Right" Font="TH SarabunPSK, 12pt"/>
+      <TextObject Name="TiOriginal" Left="570.78" Top="86.94" Width="162.54" Height="15.12" Text="ต้นฉบับ/ORIGINAL" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <LineObject Name="TiHeaderRule" Top="105.84" Width="733.32" Height="1.51"/>
+      <ShapeObject Name="TiInvoiceBox" Top="113.4" Width="733.32" Height="90.72"/>
+      <TextObject Name="TiInvoiceNoLabel" Left="7.56" Top="120.96" Width="113.4" Height="15.12" Text="เลขที่เอกสาร | Invoice No." Font="TH SarabunPSK, 9pt, style=Bold"/>
+      <TextObject Name="TiInvoiceNoValue" Left="136.08" Top="120.96" Width="113.4" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
+      <TextObject Name="TiDateLabel" Left="7.56" Top="143.64" Width="68.04" Height="15.12" Text="วันที่ | Date" Font="TH SarabunPSK, 9pt, style=Bold"/>
+      <TextObject Name="TiDateValue" Left="136.08" Top="143.64" Width="113.4" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
+      <TextObject Name="TiTermLabel" Left="7.56" Top="166.32" Width="151.2" Height="15.12" Text="เงื่อนไขการชำระเงิน | Term of Payment" Font="TH SarabunPSK, 9pt, style=Bold"/>
+      <TextObject Name="TiTermValue" Left="136.08" Top="166.32" Width="113.4" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
+      <TextObject Name="TiRefLabel" Left="7.56" Top="166.32" Width="158.76" Height="15.12" Text="อ้างถึงใบแจ้งหนี้เลขที่ | Ref. Invoice No." Font="TH SarabunPSK, 9pt, style=Bold"/>
+      <TextObject Name="TiRefValue" Left="136.08" Top="166.32" Width="113.4" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 9pt"/>
+      <ShapeObject Name="TiPOBox" Top="203.58" Width="733.32" Height="37.8"/>
+      <TextObject Name="TiPurchaseLabel" Left="7.56" Top="207.36" Width="230.58" Height="30.24" Text="เลขที่ใบสั่งซื้อ / สัญญา&#10;Purchase Order / Contract No." HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiQuotationLabel" Left="249.48" Top="207.36" Width="219.24" Height="30.24" Text="เลขที่ใบเสนอราคา&#10;Quotation No." HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiSalesLabel" Left="529.2" Top="207.36" Width="181.44" Height="30.24" Text="พนักงานขาย&#10;Sales Person" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <ShapeObject Name="TiProjectBox" Top="241.56" Width="733.32" Height="30.24"/>
+      <TextObject Name="TiProjectLabel" Left="22.68" Top="245.34" Width="94.5" Height="15.12" Text="โครงการ / Project" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiDepartmentLabel" Left="22.68" Top="260.46" Width="105.84" Height="15.12" Text="แผนก / Department" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="HeaderLine1" Top="279.36" Width="52.92" Height="18.9" Border.Lines="All" Text="ลำดับที่&#10;Item" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="HeaderLine2" Left="52.92" Top="279.36" Width="347.76" Height="18.9" Border.Lines="All" Text="รายการ&#10;Description" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="HeaderLine3" Left="400.68" Top="279.36" Width="68.04" Height="18.9" Border.Lines="All" Text="จำนวน&#10;Quantity" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="HeaderLine4" Left="468.72" Top="279.36" Width="102.06" Height="18.9" Border.Lines="All" Text="ราคา / หน่วย&#10;Unit Price" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="HeaderLine5" Left="570.78" Top="279.36" Width="52.92" Height="18.9" Border.Lines="All" Text="ส่วนลด&#10;Discount" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="HeaderLine6" Left="623.7" Top="279.36" Width="109.62" Height="18.9" Border.Lines="All" Text="จำนวนเงิน (บาท)&#10;Amount" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+    </PageHeaderBand>
+    <DataBand Name="TaxInvoiceItems" Height="18.9" DataSource="Items">
+      <TextObject Name="LineNo" Width="52.92" Height="18.9" Border.Lines="All" Text="[Items.LineNo]" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="Description" Left="52.92" Width="347.76" Height="18.9" Border.Lines="All" Text="[Items.Description]" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="Quantity" Left="400.68" Width="68.04" Height="18.9" Border.Lines="All" Text="[Items.Quantity]" HorzAlign="Center" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="UnitPrice" Left="468.72" Width="102.06" Height="18.9" Border.Lines="All" Text="[Items.UnitPrice]" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="Discount" Left="570.78" Width="52.92" Height="18.9" Border.Lines="All" Text="[Items.Discount]" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="Amount" Left="623.7" Width="109.62" Height="18.9" Border.Lines="All" Text="[Items.Amount]" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+    </DataBand>
+    <ReportSummaryBand Name="ReportSummary" Height="194.88" PrintOnBottom="true">
+      <ShapeObject Name="TiWordsBox" Width="476.28" Height="30.24"/>
+      <TextObject Name="TiWordsLabel" Left="7.56" Top="3.78" Width="143.64" Height="15.12" Text="จำนวนเงิน (ตัวอักษร)" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiWordsValue" Left="151.2" Top="3.78" Width="317.52" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <ShapeObject Name="TiTotalBox" Left="476.28" Width="257.04" Height="106.92"/>
+      <TextObject Name="TiTotalAmountLabel" Left="483.84" Top="7.56" Width="113.4" Height="15.12" Text="รวมราคา    Amount" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiTotalAmountValue" Left="585.9" Top="7.56" Width="136.08" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiTotalDiscountLabel" Left="483.84" Top="30.24" Width="113.4" Height="15.12" Text="ส่วนลด     Discount" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiTotalDiscountValue" Left="585.9" Top="30.24" Width="136.08" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiTotalNetLabel" Left="483.84" Top="52.92" Width="128.52" Height="15.12" Text="มูลค่าสินค้า    Net Amount" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiTotalNetValue" Left="585.9" Top="52.92" Width="136.08" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiTotalVatLabel" Left="483.84" Top="75.6" Width="128.52" Height="15.12" Text="ภาษีมูลค่าเพิ่ม   VAT 7.00%" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiTotalVatValue" Left="585.9" Top="75.6" Width="136.08" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiTotalGrandLabel" Left="483.84" Top="98.28" Width="128.52" Height="15.12" Text="ยอดเงินสุทธิ   Net Amount" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiTotalGrandValue" Left="585.9" Top="98.28" Width="136.08" Height="15.12" HorzAlign="Right" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <ShapeObject Name="TiNoteBox" Top="113.4" Width="733.32" Height="68.04"/>
+      <TextObject Name="TiRemarkLabel" Left="7.56" Top="117.18" Width="45.36" Height="15.12" Text="หมายเหตุ" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiRemarkText" Left="60.48" Top="117.18" Width="362.88" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiReceivedTh" Top="186.69" Width="400.68" Height="15.12" Text="ข้าพเจ้าได้รับสินค้าตามรายการข้างต้นโดยถูกต้องและเรียบร้อย" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiReceivedEn" Top="201.81" Width="400.68" Height="15.12" Text="Received the above mentioned goods order and condition." Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiForLabel" Left="408.24" Top="186.69" Width="52.92" Height="15.12" Text="ในนาม :" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiForValue" Left="468.72" Top="186.69" Width="264.6" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiForLabelEn" Left="408.24" Top="201.81" Width="52.92" Height="15.12" Text="For :" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiForValueEn" Left="468.72" Top="201.81" Width="264.6" Height="15.12" Font="TH SarabunPSK, 8.5pt"/>
+      <ShapeObject Name="TiReceiverBox" Top="215.01" Width="234.36" Height="52.92"/>
+      <ShapeObject Name="TiDeliveryBox" Left="249.48" Top="215.01" Width="234.36" Height="52.92"/>
+      <ShapeObject Name="TiAuthorizedBox" Left="498.96" Top="215.01" Width="234.36" Height="52.92"/>
+      <TextObject Name="TiReceiverLabel" Left="15.12" Top="233.91" Width="52.92" Height="18.9" Text="ผู้รับ&#10;Receiver" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiDeliveryLabel" Left="264.6" Top="233.91" Width="52.92" Height="18.9" Text="ผู้ส่ง&#10;Delivery" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <TextObject Name="TiAuthorizedLabel" Left="514.08" Top="233.91" Width="90.72" Height="18.9" Text="ผู้อนุมัติ&#10;Authorized Signature" Font="TH SarabunPSK, 8.5pt, style=Bold"/>
+      <LineObject Name="TiReceiverLine" Left="15.12" Top="226.35" Width="204.12" Height="1.51"/>
+      <LineObject Name="TiDeliveryLine" Left="264.6" Top="226.35" Width="204.12" Height="1.51"/>
+      <LineObject Name="TiAuthorizedLine" Left="514.08" Top="226.35" Width="204.12" Height="1.51"/>
+      <TextObject Name="TiDateReceiver" Left="15.12" Top="256.68" Width="151.2" Height="15.12" Text="วันที่ / Date __________________" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiDateDelivery" Left="264.6" Top="256.68" Width="151.2" Height="15.12" Text="วันที่ / Date __________________" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiDateAuthorized" Left="514.08" Top="256.68" Width="151.2" Height="15.12" Text="วันที่ / Date __________________" Font="TH SarabunPSK, 8.5pt"/>
+      <TextObject Name="TiRemarkTh" Top="270.88" Width="733.32" Height="15.12" Font="TH SarabunPSK, 8pt"/>
+      <TextObject Name="TiRemarkEn" Top="286" Width="733.32" Height="15.12" Font="TH SarabunPSK, 8pt"/>
+    </ReportSummaryBand>
+  </ReportPage>
+</Report>

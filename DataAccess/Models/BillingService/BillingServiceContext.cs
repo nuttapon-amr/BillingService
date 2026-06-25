@@ -37,7 +37,7 @@ public partial class BillingServiceContext : DbContext
     public virtual DbSet<DocumentTemplate> DocumentTemplates { get; set; }
 
     public virtual DbSet<DocumentType> DocumentTypes { get; set; }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -172,10 +172,16 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.CompanyBranchNoSnapshot)
                 .HasMaxLength(10)
                 .HasComment("สาขาบริษัท ณ วันที่ออกเอกสาร");
+            entity.Property(e => e.CompanyEmailSnapshot)
+                .HasMaxLength(255)
+                .HasComment("อีเมลบริษัท ณ วันที่ออกเอกสาร");
             entity.Property(e => e.CompanyId).HasComment("บริษัทผู้ออกเอกสาร");
             entity.Property(e => e.CompanyNameSnapshot)
                 .HasMaxLength(255)
                 .HasComment("ชื่อบริษัท ณ วันที่ออกเอกสาร");
+            entity.Property(e => e.CompanyPhoneSnapshot)
+                .HasMaxLength(50)
+                .HasComment("เบอร์โทรบริษัท ณ วันที่ออกเอกสาร");
             entity.Property(e => e.CompanyTaxIdSnapshot)
                 .HasMaxLength(20)
                 .HasComment("เลขผู้เสียภาษีบริษัท ณ วันที่ออกเอกสาร");
@@ -192,10 +198,16 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.CustomerBranchNoSnapshot)
                 .HasMaxLength(10)
                 .HasComment("สาขา ณ วันที่ออกเอกสาร");
+            entity.Property(e => e.CustomerEmailSnapshot)
+                .HasMaxLength(255)
+                .HasComment("อีเมลลูกค้า ณ วันที่ออกเอกสาร");
             entity.Property(e => e.CustomerId).HasComment("ลูกค้าผู้รับเอกสาร");
             entity.Property(e => e.CustomerNameSnapshot)
                 .HasMaxLength(255)
                 .HasComment("ชื่อลูกค้า ณ วันที่ออกเอกสาร");
+            entity.Property(e => e.CustomerPhoneSnapshot)
+                .HasMaxLength(50)
+                .HasComment("เบอร์โทรลูกค้า ณ วันที่ออกเอกสาร");
             entity.Property(e => e.CustomerPostalCodeSnapshot)
                 .HasMaxLength(10)
                 .HasComment("รหัสไปรษณีย์ ณ วันที่ออกเอกสาร");
@@ -238,7 +250,19 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.OriginalVatAmountSnapshot)
                 .HasPrecision(18, 2)
                 .HasComment("ยอด VAT ของเอกสารต้นฉบับ");
+            entity.Property(e => e.PaymentMethodSnapshot)
+                .HasMaxLength(50)
+                .HasComment("วิธีชำระเงิน ณ วันที่ออกเอกสาร");
             entity.Property(e => e.ReferenceDocumentId).HasComment("เอกสารอ้างอิง เช่น TI อ้างอิง RC เดิม");
+            entity.Property(e => e.ReferenceDocumentNoSnapshot)
+                .HasMaxLength(50)
+                .HasComment("เลขเอกสารอ้างอิงแบบ snapshot สำหรับแสดงใน PDF");
+            entity.Property(e => e.ReferenceDocumentTypeSnapshot)
+                .HasMaxLength(20)
+                .HasComment("ประเภทเอกสารอ้างอิงแบบ snapshot");
+            entity.Property(e => e.ReferenceIssueDateSnapshot)
+                .HasComment("วันที่เอกสารอ้างอิงแบบ snapshot")
+                .HasColumnType("datetime");
             entity.Property(e => e.Remark)
                 .HasComment("หมายเหตุ")
                 .HasColumnType("text");
@@ -412,6 +436,10 @@ public partial class BillingServiceContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasComment("วันที่สร้างข้อมูล")
                 .HasColumnType("datetime");
+            entity.Property(e => e.DiscountAmount)
+                .HasPrecision(18, 2)
+                .HasDefaultValueSql("'0.00'")
+                .HasComment("ส่วนลดต่อรายการ");
             entity.Property(e => e.DocumentId).HasComment("รหัสเอกสาร");
             entity.Property(e => e.ItemCode)
                 .HasMaxLength(50)
@@ -419,10 +447,21 @@ public partial class BillingServiceContext : DbContext
             entity.Property(e => e.ItemName)
                 .HasMaxLength(255)
                 .HasComment("ชื่อสินค้า/บริการ");
+            entity.Property(e => e.ItemRemark)
+                .HasMaxLength(255)
+                .HasComment("หมายเหตุของรายการ");
+            entity.Property(e => e.LineNo).HasComment("ลำดับรายการในเอกสาร");
+            entity.Property(e => e.NetAmount)
+                .HasPrecision(18, 2)
+                .HasDefaultValueSql("'0.00'")
+                .HasComment("ยอดสุทธิหลังหักส่วนลด");
             entity.Property(e => e.Quantity)
                 .HasPrecision(18, 2)
                 .HasDefaultValueSql("'1.00'")
                 .HasComment("จำนวน");
+            entity.Property(e => e.UnitName)
+                .HasMaxLength(50)
+                .HasComment("หน่วยนับ");
             entity.Property(e => e.UnitPrice)
                 .HasPrecision(18, 2)
                 .HasComment("ราคาต่อหน่วย");

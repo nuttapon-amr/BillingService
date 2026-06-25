@@ -4,6 +4,8 @@ using DataAccess.Models.BillingService;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
+AppContext.SetSwitch("System.Drawing.EnableUnixSupport", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();

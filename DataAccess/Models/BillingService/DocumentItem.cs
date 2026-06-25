@@ -19,9 +19,19 @@ public partial class DocumentItem
     public Guid DocumentId { get; set; }
 
     /// <summary>
+    /// ลำดับรายการในเอกสาร
+    /// </summary>
+    public int? LineNo { get; set; }
+
+    /// <summary>
     /// รหัสสินค้า/บริการ
     /// </summary>
     public string? ItemCode { get; set; }
+
+    /// <summary>
+    /// หน่วยนับ
+    /// </summary>
+    public string? UnitName { get; set; }
 
     /// <summary>
     /// ชื่อสินค้า/บริการ
@@ -52,6 +62,21 @@ public partial class DocumentItem
     /// ยอด VAT ของรายการ
     /// </summary>
     public decimal VatAmount { get; set; }
+
+    /// <summary>
+    /// ส่วนลดต่อรายการ
+    /// </summary>
+    public decimal? DiscountAmount { get; set; }
+
+    /// <summary>
+    /// ยอดสุทธิหลังหักส่วนลด
+    /// </summary>
+    public decimal? NetAmount { get; set; }
+
+    /// <summary>
+    /// หมายเหตุของรายการ
+    /// </summary>
+    public string? ItemRemark { get; set; }
 
     /// <summary>
     /// วันที่สร้างข้อมูล

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text;
 using BillingService_API.DTOs.Requests;
 using BillingService_API.DTOs.Responses;
 using BillingService_API.Services.Interfaces;
@@ -78,6 +77,7 @@ public class DocumentService : IDocumentService
             SourceType = request.SourceType.Trim(),
             SourceId = request.SourceId,
             SourceNo = request.SourceNo,
+            PaymentMethodSnapshot = request.PaymentMethodSnapshot?.Trim(),
             DocumentType = ReceiptDocumentType,
             DocumentNo = documentNo,
             RunningYearMonth = yearMonth,
@@ -102,7 +102,7 @@ public class DocumentService : IDocumentService
 
         _context.Documents.Add(document);
         _context.DocumentAuditLogs.Add(CreateAuditLog(document.DocumentId, "Created", null, new { document.DocumentNo, document.Status }));
-        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(document, "Receipt", company.CompanyName, template, cancellationToken);
+        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(document, company.CompanyName, template, cancellationToken);
         _context.DocumentFiles.Add(autoPdfFile);
         _context.DocumentAuditLogs.Add(CreateAuditLog(
             document.DocumentId,
@@ -150,7 +150,6 @@ public class DocumentService : IDocumentService
 
     private async Task<DocumentFile> CreateAutoDocumentPdfFileAsync(
         Document document,
-        string title,
         string companyName,
         DocumentTemplate template,
         CancellationToken cancellationToken)
@@ -160,7 +159,7 @@ public class DocumentService : IDocumentService
 
         var fileName = $"{document.DocumentNo}.pdf";
         var filePath = Path.Combine(receiptsDir, fileName);
-        var pdfBytes = BuildTemplatePdfBytes(document, companyName, title, template);
+        var pdfBytes = DocumentPdfBuilder.Build(document, companyName, document.DocumentType, template);
         await File.WriteAllBytesAsync(filePath, pdfBytes, cancellationToken);
 
         return new DocumentFile
@@ -322,244 +321,6 @@ public class DocumentService : IDocumentService
         return Path.Combine(webRootPath, "files", "receipts");
     }
 
-    private static byte[] BuildTemplatePdfBytes(Document document, string companyName, string title, DocumentTemplate template)
-    {
-        return DocumentPdfBuilder.Build(document, companyName, title, template);
-    }
-
-    private static string EscapePdfText(string input)
-    {
-        return input
-            .Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("(", "\\(", StringComparison.Ordinal)
-            .Replace(")", "\\)", StringComparison.Ordinal);
-    }
-
-    private static string ResolveLogoDisplayText(string? logoPath)
-    {
-        if (string.IsNullOrWhiteSpace(logoPath))
-        {
-            return "-";
-        }
-
-        var trimmed = logoPath.Trim();
-        if (Uri.TryCreate(trimmed, UriKind.Absolute, out var uri) &&
-            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
-        {
-            return $"LogoUrl: {trimmed}";
-        }
-
-        if (Path.IsPathRooted(trimmed))
-        {
-            return $"LogoPath: {trimmed}";
-        }
-
-        var localPath = Path.Combine(AppContext.BaseDirectory, trimmed);
-        if (File.Exists(localPath))
-        {
-            return $"LogoPath: {localPath}";
-        }
-
-        return $"LogoPath: {trimmed}";
-    }
-
-    private static void AddPdfGraphicsHeader(List<string> lines)
-    {
-        lines.Add("0.15 0.2 0.28 rg");
-        lines.Add("0.15 0.2 0.28 RG");
-        lines.Add("0.8 w");
-        lines.Add("0.96 0.96 0.96 rg");
-    }
-
-    private static void AddPdfRect(List<string> lines, double x, double y, double width, double height, bool stroke = true, bool fill = false)
-    {
-        lines.Add($"{FormatPdfNumber(x)} {FormatPdfNumber(y)} {FormatPdfNumber(width)} {FormatPdfNumber(height)} re {(fill && stroke ? "B" : fill ? "f" : "S")}");
-    }
-
-    private static void AddPdfFilledRect(List<string> lines, double x, double y, double width, double height, string rgb)
-    {
-        lines.Add($"{rgb} rg");
-        lines.Add($"{FormatPdfNumber(x)} {FormatPdfNumber(y)} {FormatPdfNumber(width)} {FormatPdfNumber(height)} re f");
-        lines.Add("0 0 0 rg");
-    }
-
-    private static void AddPdfLine(List<string> lines, double x1, double y1, double x2, double y2, double width)
-    {
-        lines.Add($"{FormatPdfNumber(width)} w");
-        lines.Add($"{FormatPdfNumber(x1)} {FormatPdfNumber(y1)} m {FormatPdfNumber(x2)} {FormatPdfNumber(y2)} l S");
-        lines.Add("0.8 w");
-    }
-
-    private static void AddPdfText(
-        List<string> lines,
-        double x,
-        double y,
-        int fontSize,
-        string text,
-        bool bold = false,
-        bool alignRight = false,
-        int maxChars = 60)
-    {
-        var font = bold ? "/F2" : "/F1";
-        var safeText = EscapePdfText(TruncateText(text, maxChars));
-        var effectiveX = alignRight ? x - (safeText.Length * fontSize * 0.42) : x;
-        lines.Add($"BT {font} {fontSize} Tf {FormatPdfNumber(effectiveX)} {FormatPdfNumber(y)} Td ({safeText}) Tj ET");
-    }
-
-    private static void AddSectionHeader(List<string> lines, double x, double y, double width, string title)
-    {
-        AddPdfFilledRect(lines, x, y, width, 18, "0.88 0.90 0.93");
-        AddPdfRect(lines, x, y, width, 18);
-        AddPdfText(lines, x + 6, y + 5, 8, title, bold: true, maxChars: 42);
-    }
-
-    private static void AddKeyValueBlock(List<string> lines, double x, double yTop, double width, IEnumerable<(string Label, string Value)> rows)
-    {
-        var y = yTop;
-        foreach (var (label, value) in rows)
-        {
-            AddPdfText(lines, x + 6, y, 8, $"{label}:", bold: true, maxChars: 16);
-            AddPdfText(lines, x + 70, y, 8, value, maxChars: 30);
-            y -= 14;
-        }
-
-        AddPdfRect(lines, x, y + 2, width, yTop - y + 2);
-    }
-
-    private static void AddItemsTable(List<string> lines, Document document)
-    {
-        var left = 42.0;
-        var top = 480.0;
-        var tableWidth = 510.0;
-        var rowHeight = 16.0;
-
-        var columns = new[]
-        {
-            (Title: "No", X: left, Width: 22.0),
-            (Title: "Item", X: left + 22, Width: 200.0),
-            (Title: "Qty", X: left + 222, Width: 40.0),
-            (Title: "Unit", X: left + 262, Width: 56.0),
-            (Title: "Amount", X: left + 318, Width: 70.0),
-            (Title: "VAT", X: left + 388, Width: 50.0),
-            (Title: "Line Total", X: left + 438, Width: 114.0)
-        };
-
-        AddPdfFilledRect(lines, left, top, tableWidth, rowHeight, "0.15 0.2 0.28");
-        AddPdfRect(lines, left, top, tableWidth, rowHeight);
-        foreach (var column in columns)
-        {
-            AddPdfText(lines, column.X + 2, top + 5, 7, column.Title, bold: true, maxChars: 18);
-        }
-
-        var rowY = top - rowHeight;
-        var items = document.DocumentItems.Take(6).ToList();
-        if (items.Count == 0)
-        {
-            AddPdfRect(lines, left, rowY, tableWidth, rowHeight);
-            AddPdfText(lines, left + 8, rowY + 5, 8, "No items found.", maxChars: 48);
-            return;
-        }
-
-        for (var index = 0; index < items.Count; index++)
-        {
-            var item = items[index];
-            AddPdfRect(lines, left, rowY, tableWidth, rowHeight);
-            AddPdfText(lines, columns[0].X + 2, rowY + 5, 7, (index + 1).ToString(), maxChars: 4);
-            AddPdfText(lines, columns[1].X + 2, rowY + 5, 7, FormatOrDash(item.ItemName), maxChars: 36);
-            AddPdfText(lines, columns[2].X + 2, rowY + 5, 7, item.Quantity.ToString("0.##"), maxChars: 8);
-            AddPdfText(lines, columns[3].X + 2, rowY + 5, 7, item.UnitPrice.ToString("0.00"), maxChars: 10);
-            AddPdfText(lines, columns[4].X + 2, rowY + 5, 7, item.Amount.ToString("0.00"), maxChars: 12);
-            AddPdfText(lines, columns[5].X + 2, rowY + 5, 7, item.VatAmount.ToString("0.00"), maxChars: 10);
-            AddPdfText(lines, columns[6].X + 2, rowY + 5, 7, (item.Amount + item.VatAmount).ToString("0.00"), maxChars: 12);
-            rowY -= rowHeight;
-        }
-
-        if (document.DocumentItems.Count > items.Count)
-        {
-            AddPdfText(lines, left, rowY - 2, 7, $"Showing first {items.Count} of {document.DocumentItems.Count} items.", maxChars: 44);
-        }
-    }
-
-    private static void AddSummaryBox(List<string> lines, Document document)
-    {
-        var x = 360.0;
-        var y = 292.0;
-        var width = 192.0;
-        var height = 82.0;
-
-        AddPdfRect(lines, x, y, width, height);
-        AddPdfFilledRect(lines, x, y + 66, width, 16, "0.94 0.95 0.97");
-        AddPdfText(lines, x + 8, y + 71, 8, "Financial Summary", bold: true, maxChars: 24);
-
-        var rows = new[]
-        {
-            ("Sub Total", document.SubTotal),
-            ("VAT", document.VatAmount),
-            ("Grand Total", document.GrandTotal)
-        };
-
-        var rowY = y + 48;
-        foreach (var row in rows)
-        {
-            AddPdfText(lines, x + 8, rowY, 8, row.Item1, bold: true, maxChars: 12);
-            AddPdfText(lines, x + 120, rowY, 8, row.Item2.ToString("0.00"), alignRight: true, maxChars: 14);
-            rowY -= 15;
-        }
-    }
-
-    private static void AddNotesBlock(List<string> lines, Document document, string footer)
-    {
-        var x = 42.0;
-        var y = 148.0;
-        var width = 244.0;
-        var height = 62.0;
-
-        AddPdfRect(lines, x, y, width, height);
-        AddPdfText(lines, x + 8, y + 46, 8, $"Reference: {FormatOrDash(document.SourceNo)}", maxChars: 36);
-        AddPdfText(lines, x + 8, y + 32, 8, $"Remark: {FormatOrDash(document.Remark)}", maxChars: 36);
-        AddPdfText(lines, x + 8, y + 18, 8, $"Footer: {footer}", maxChars: 36);
-        AddPdfText(lines, x + 8, y + 6, 7, $"Type: {document.DocumentType} | Status: {document.Status}", maxChars: 42);
-    }
-
-    private static void AddSignatureBlock(List<string> lines)
-    {
-        var x = 308.0;
-        var y = 148.0;
-        var width = 244.0;
-        var height = 62.0;
-
-        AddPdfRect(lines, x, y, width, height);
-        AddPdfLine(lines, x + 18, y + 22, x + 104, y + 22, 0.5);
-        AddPdfLine(lines, x + 132, y + 22, x + 218, y + 22, 0.5);
-        AddPdfText(lines, x + 26, y + 10, 7, "Authorized Signature", maxChars: 22);
-        AddPdfText(lines, x + 140, y + 10, 7, "Receiver Acknowledgement", maxChars: 22);
-    }
-
-    private static string FormatOrDash(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? "-" : value.Trim();
-    }
-
-    private static string TruncateText(string text, int maxChars)
-    {
-        if (maxChars <= 0 || text.Length <= maxChars)
-        {
-            return text;
-        }
-
-        if (maxChars <= 1)
-        {
-            return text[..1];
-        }
-
-        return text[..(maxChars - 1)] + "…";
-    }
-
-    private static string FormatPdfNumber(double value)
-    {
-        return value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
-    }
-
     public async Task<DocumentResponse> CreateTaxInvoiceFromReceiptAsync(Guid documentId, CreateTaxInvoiceRequest request, CancellationToken cancellationToken = default)
     {
         if (documentId == Guid.Empty)
@@ -641,7 +402,11 @@ public class DocumentService : IDocumentService
             SourceType = receipt.SourceType,
             SourceId = receipt.SourceId,
             SourceNo = receipt.SourceNo,
+            PaymentMethodSnapshot = receipt.PaymentMethodSnapshot,
             ReferenceDocumentId = receipt.DocumentId,
+            ReferenceDocumentNoSnapshot = receipt.DocumentNo,
+            ReferenceIssueDateSnapshot = receipt.IssueDate,
+            ReferenceDocumentTypeSnapshot = receipt.DocumentType,
             DocumentType = TaxInvoiceDocumentType,
             DocumentNo = documentNo,
             RunningYearMonth = yearMonth,
@@ -665,13 +430,18 @@ public class DocumentService : IDocumentService
             taxInvoice.DocumentItems.Add(new DocumentItem
             {
                 DocumentItemId = Guid.NewGuid(),
+                LineNo = sourceItem.LineNo,
                 ItemCode = sourceItem.ItemCode,
+                UnitName = sourceItem.UnitName,
                 ItemName = sourceItem.ItemName,
                 Quantity = sourceItem.Quantity,
                 UnitPrice = sourceItem.UnitPrice,
                 Amount = sourceItem.Amount,
                 VatRate = sourceItem.VatRate,
-                VatAmount = sourceItem.VatAmount
+                VatAmount = sourceItem.VatAmount,
+                DiscountAmount = sourceItem.DiscountAmount,
+                NetAmount = sourceItem.NetAmount,
+                ItemRemark = sourceItem.ItemRemark
             });
         }
 
@@ -679,7 +449,7 @@ public class DocumentService : IDocumentService
 
         _context.Documents.Add(taxInvoice);
         _context.DocumentAuditLogs.Add(CreateAuditLog(taxInvoice.DocumentId, "Created", null, new { taxInvoice.DocumentNo, taxInvoice.Status }));
-        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(taxInvoice, "Tax Invoice", company.CompanyName, template, cancellationToken);
+        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(taxInvoice, company.CompanyName, template, cancellationToken);
         _context.DocumentFiles.Add(autoPdfFile);
         _context.DocumentAuditLogs.Add(CreateAuditLog(
             taxInvoice.DocumentId,
@@ -838,7 +608,7 @@ public class DocumentService : IDocumentService
             new { creditNote.DocumentNo, creditNote.Status, creditNote.ReferenceDocumentId },
             cancelledBy));
 
-        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(creditNote, "Credit Note", company.CompanyName, creditNoteTemplate, cancellationToken);
+        var autoPdfFile = await CreateAutoDocumentPdfFileAsync(creditNote, company.CompanyName, creditNoteTemplate, cancellationToken);
         _context.DocumentFiles.Add(autoPdfFile);
         _context.DocumentAuditLogs.Add(CreateAuditLog(
             creditNote.DocumentId,
@@ -950,16 +720,21 @@ public class DocumentService : IDocumentService
             subTotal += amount;
             vatAmount += itemVatAmount;
 
-            entities.Add(new DocumentItem
+        entities.Add(new DocumentItem
             {
                 DocumentItemId = Guid.NewGuid(),
+                LineNo = item.LineNo ?? entities.Count + 1,
                 ItemCode = item.ItemCode,
-                ItemName = item.ItemName.Trim(),
-                Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice,
+                UnitName = item.UnitName,
+            ItemName = item.ItemName.Trim(),
+            Quantity = item.Quantity,
+            UnitPrice = item.UnitPrice,
                 Amount = amount,
                 VatRate = item.VatRate,
-                VatAmount = itemVatAmount
+                VatAmount = itemVatAmount,
+                DiscountAmount = item.DiscountAmount ?? 0m,
+                NetAmount = decimal.Round(amount - (item.DiscountAmount ?? 0m), 2, MidpointRounding.AwayFromZero),
+                ItemRemark = item.ItemRemark
             });
         }
 
@@ -976,6 +751,8 @@ public class DocumentService : IDocumentService
         document.CompanyTaxIdSnapshot = company.TaxId;
         document.CompanyBranchNoSnapshot = company.BranchNo;
         document.CompanyAddressSnapshot = company.Address;
+        document.CompanyEmailSnapshot = company.Email;
+        document.CompanyPhoneSnapshot = company.Phone;
     }
 
     private static void ApplyReceiverSnapshot(Document document, Customer? customer)
@@ -988,6 +765,8 @@ public class DocumentService : IDocumentService
             document.CustomerBranchNoSnapshot = customer.BranchNo;
             document.CustomerAddressSnapshot = customer.Address;
             document.CustomerPostalCodeSnapshot = customer.PostalCode;
+            document.CustomerEmailSnapshot = customer.Email;
+            document.CustomerPhoneSnapshot = customer.Phone;
         }
     }
 
@@ -999,6 +778,8 @@ public class DocumentService : IDocumentService
         target.CustomerBranchNoSnapshot = source.CustomerBranchNoSnapshot;
         target.CustomerAddressSnapshot = source.CustomerAddressSnapshot;
         target.CustomerPostalCodeSnapshot = source.CustomerPostalCodeSnapshot;
+        target.CustomerEmailSnapshot = source.CustomerEmailSnapshot;
+        target.CustomerPhoneSnapshot = source.CustomerPhoneSnapshot;
     }
 
     private static void ApplyReceiverSnapshotFallback(Document target, Customer? customer)
@@ -1014,6 +795,8 @@ public class DocumentService : IDocumentService
         target.CustomerBranchNoSnapshot ??= customer.BranchNo;
         target.CustomerAddressSnapshot ??= customer.Address;
         target.CustomerPostalCodeSnapshot ??= customer.PostalCode;
+        target.CustomerEmailSnapshot ??= customer.Email;
+        target.CustomerPhoneSnapshot ??= customer.Phone;
     }
 
     private static Document BuildCreditNoteFromCancelledTaxInvoice(
@@ -1033,16 +816,24 @@ public class DocumentService : IDocumentService
             CompanyTaxIdSnapshot = source.CompanyTaxIdSnapshot,
             CompanyBranchNoSnapshot = source.CompanyBranchNoSnapshot,
             CompanyAddressSnapshot = source.CompanyAddressSnapshot,
+            CompanyEmailSnapshot = source.CompanyEmailSnapshot,
+            CompanyPhoneSnapshot = source.CompanyPhoneSnapshot,
             CustomerNameSnapshot = source.CustomerNameSnapshot,
             CustomerTypeSnapshot = source.CustomerTypeSnapshot,
             CustomerTaxIdSnapshot = source.CustomerTaxIdSnapshot,
             CustomerBranchNoSnapshot = source.CustomerBranchNoSnapshot,
             CustomerAddressSnapshot = source.CustomerAddressSnapshot,
             CustomerPostalCodeSnapshot = source.CustomerPostalCodeSnapshot,
+            CustomerEmailSnapshot = source.CustomerEmailSnapshot,
+            CustomerPhoneSnapshot = source.CustomerPhoneSnapshot,
+            PaymentMethodSnapshot = source.PaymentMethodSnapshot,
             SourceType = source.SourceType,
             SourceId = source.SourceId,
             SourceNo = source.SourceNo,
             ReferenceDocumentId = source.DocumentId,
+            ReferenceDocumentNoSnapshot = source.DocumentNo,
+            ReferenceIssueDateSnapshot = source.IssueDate,
+            ReferenceDocumentTypeSnapshot = source.DocumentType,
             OriginalDocumentNoSnapshot = source.DocumentNo,
             OriginalIssueDateSnapshot = source.IssueDate,
             OriginalDocumentTypeSnapshot = source.DocumentType,
@@ -1068,13 +859,18 @@ public class DocumentService : IDocumentService
             creditNote.DocumentItems.Add(new DocumentItem
             {
                 DocumentItemId = Guid.NewGuid(),
+                LineNo = sourceItem.LineNo,
                 ItemCode = sourceItem.ItemCode,
+                UnitName = sourceItem.UnitName,
                 ItemName = sourceItem.ItemName,
                 Quantity = decimal.Negate(sourceItem.Quantity),
                 UnitPrice = sourceItem.UnitPrice,
                 Amount = decimal.Negate(sourceItem.Amount),
                 VatRate = sourceItem.VatRate,
-                VatAmount = decimal.Negate(sourceItem.VatAmount)
+                VatAmount = decimal.Negate(sourceItem.VatAmount),
+                DiscountAmount = sourceItem.DiscountAmount,
+                NetAmount = sourceItem.NetAmount.HasValue ? decimal.Negate(sourceItem.NetAmount.Value) : null,
+                ItemRemark = sourceItem.ItemRemark
             });
         }
 
@@ -1106,12 +902,17 @@ public class DocumentService : IDocumentService
             CompanyTaxIdSnapshot = document.CompanyTaxIdSnapshot,
             CompanyBranchNoSnapshot = document.CompanyBranchNoSnapshot,
             CompanyAddressSnapshot = document.CompanyAddressSnapshot,
+            CompanyEmailSnapshot = document.CompanyEmailSnapshot,
+            CompanyPhoneSnapshot = document.CompanyPhoneSnapshot,
             CustomerNameSnapshot = document.CustomerNameSnapshot,
             CustomerTypeSnapshot = document.CustomerTypeSnapshot,
             CustomerTaxIdSnapshot = document.CustomerTaxIdSnapshot,
             CustomerBranchNoSnapshot = document.CustomerBranchNoSnapshot,
             CustomerAddressSnapshot = document.CustomerAddressSnapshot,
             CustomerPostalCodeSnapshot = document.CustomerPostalCodeSnapshot,
+            CustomerEmailSnapshot = document.CustomerEmailSnapshot,
+            CustomerPhoneSnapshot = document.CustomerPhoneSnapshot,
+            PaymentMethodSnapshot = document.PaymentMethodSnapshot,
             SourceType = document.SourceType,
             SourceId = document.SourceId,
             SourceNo = document.SourceNo,
@@ -1127,6 +928,9 @@ public class DocumentService : IDocumentService
             GrandTotal = document.GrandTotal,
             Remark = document.Remark,
             ReferenceDocumentId = document.ReferenceDocumentId,
+            ReferenceDocumentNoSnapshot = document.ReferenceDocumentNoSnapshot,
+            ReferenceIssueDateSnapshot = document.ReferenceIssueDateSnapshot,
+            ReferenceDocumentTypeSnapshot = document.ReferenceDocumentTypeSnapshot,
             OriginalDocumentNoSnapshot = document.OriginalDocumentNoSnapshot,
             OriginalIssueDateSnapshot = document.OriginalIssueDateSnapshot,
             OriginalDocumentTypeSnapshot = document.OriginalDocumentTypeSnapshot,
@@ -1140,13 +944,18 @@ public class DocumentService : IDocumentService
             Items = document.DocumentItems.Select(item => new DocumentItemResponse
             {
                 DocumentItemId = item.DocumentItemId,
+                LineNo = item.LineNo,
                 ItemCode = item.ItemCode,
+                UnitName = item.UnitName,
                 ItemName = item.ItemName,
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
                 Amount = item.Amount,
                 VatRate = item.VatRate,
-                VatAmount = item.VatAmount
+                VatAmount = item.VatAmount,
+                DiscountAmount = item.DiscountAmount,
+                NetAmount = item.NetAmount,
+                ItemRemark = item.ItemRemark
             }).ToList()
         };
     }
