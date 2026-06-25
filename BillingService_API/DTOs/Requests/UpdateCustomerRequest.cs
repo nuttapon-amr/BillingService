@@ -4,9 +4,8 @@ namespace BillingService_API.DTOs.Requests;
 
 public class UpdateCustomerRequest
 {
-    [Required]
     [MaxLength(255)]
-    public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerName { get; set; }
 
     [Required]
     [MaxLength(20)]
@@ -24,7 +23,6 @@ public class UpdateCustomerRequest
     public string? PostalCode { get; set; }
 
     [MaxLength(255)]
-    [EmailAddress]
     public string? Email { get; set; }
 
     [MaxLength(50)]

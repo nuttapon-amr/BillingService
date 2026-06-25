@@ -16,7 +16,7 @@ public partial class Customer
     /// <summary>
     /// ชื่อลูกค้า
     /// </summary>
-    public string CustomerName { get; set; } = null!;
+    public string? CustomerName { get; set; }
 
     /// <summary>
     /// ประเภทลูกค้า: INDIVIDUAL หรือ CORPORATE

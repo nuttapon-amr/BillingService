@@ -7,13 +7,11 @@ public class CreateCustomerRequest
     [Required]
     public Guid CustomerId { get; set; }
 
-    [Required]
     [MaxLength(255)]
-    public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerName { get; set; }
 
-    [Required]
     [MaxLength(20)]
-    public string CustomerType { get; set; } = string.Empty;
+    public string CustomerType { get; set; } = "INDIVIDUAL";
 
     [MaxLength(20)]
     public string? TaxId { get; set; }
@@ -27,7 +25,6 @@ public class CreateCustomerRequest
     public string? PostalCode { get; set; }
 
     [MaxLength(255)]
-    [EmailAddress]
     public string? Email { get; set; }
 
     [MaxLength(50)]

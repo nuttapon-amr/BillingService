@@ -64,7 +64,7 @@ public class CustomerService : ICustomerService
             entity = existingCustomer;
         }
 
-        entity.CustomerName = request.CustomerName.Trim();
+        entity.CustomerName = NormalizeNullable(request.CustomerName);
         entity.CustomerType = NormalizeCustomerType(request.CustomerType);
         entity.TaxId = NormalizeNullable(request.TaxId);
         entity.BranchNo = NormalizeNullable(request.BranchNo);
@@ -94,7 +94,7 @@ public class CustomerService : ICustomerService
             throw new NotFoundException("Customer not found.");
         }
 
-        entity.CustomerName = request.CustomerName.Trim();
+        entity.CustomerName = NormalizeNullable(request.CustomerName);
         entity.CustomerType = NormalizeCustomerType(request.CustomerType);
         entity.TaxId = NormalizeNullable(request.TaxId);
         entity.BranchNo = NormalizeNullable(request.BranchNo);
@@ -158,11 +158,6 @@ public class CustomerService : ICustomerService
 
     private static void ValidateRequestCore(string? customerName, string? customerType)
     {
-        if (string.IsNullOrWhiteSpace(customerName))
-        {
-            throw new ValidationException("CustomerName is required.");
-        }
-
         if (string.IsNullOrWhiteSpace(customerType))
         {
             throw new ValidationException("CustomerType is required.");
